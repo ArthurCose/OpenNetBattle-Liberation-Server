@@ -1,0 +1,11 @@
+imagePath="ACDC Unliberated.png"
+
+animation state="BG"
+frame duration="0.3" x="4" y="4" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="72" y="4" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="140" y="4" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="208" y="4" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="4" y="136" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="72" y="136" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="140" y="136" w="64" h="128" originx="0" originy="0"
+frame duration="0.3" x="208" y="136" w="64" h="128" originx="0" originy="0"
