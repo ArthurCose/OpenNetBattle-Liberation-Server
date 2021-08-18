@@ -82,7 +82,8 @@ function PanelSelection:set_shape(shape)
       object.x = object.x + offset_x
       object.y = object.y + offset_y
 
-      if self.instance:get_panel_at(object.x, object.y) == nil then
+      local panel = self.instance:get_panel_at(object.x, object.y)
+      if not can_shape_select(self.instance, panel) then
         goto continue
       end
 
@@ -158,12 +159,24 @@ function generate_selection_object(panel_selection)
     z = panel_selection.root_panel.z,
     width = 2,
     height = 1,
-    visible = true,
     data = {
       type = "tile",
       gid = panel_selection.SELECTED_PANEL_GID,
     }
   }
+end
+
+function can_shape_select(instance, panel)
+  if panel == nil then
+    return false
+  end
+
+  return (
+    panel.data.gid == instance.BASIC_PANEL_GID or
+    panel.data.gid == instance.ITEM_PANEL_GID
+  )
+
+ -- todo: detect if an enemy is standing on this panel
 end
 
 -- exports

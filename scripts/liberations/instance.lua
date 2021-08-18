@@ -1,3 +1,4 @@
+local Ability = require("scripts/liberations/ability")
 local PanelSelection = require("scripts/liberations/panel_selection")
 
 local debug = true
@@ -18,8 +19,15 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     player_list = player_ids,
     ready_count = 0,
     player_data = {},
+    order_points = 3,
+    MAX_ORDER_POINTS = 8,
     panels = {},
     FIRST_PANEL_GID = FIRST_PANEL_GID,
+    BASIC_PANEL_GID = FIRST_PANEL_GID,
+    ITEM_PANEL_GID = FIRST_PANEL_GID + 1,
+    DARK_HOLE_PANEL_GID = FIRST_PANEL_GID + 2,
+    INDESTRUCTABLE_PANEL_GID = FIRST_PANEL_GID + 3,
+    BONUS_PANEL_GID = FIRST_PANEL_GID + 4,
     LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1
   }
 
@@ -66,7 +74,8 @@ function Mission:begin()
       health = 100,
       completed_turn = false,
       panel_selection = PanelSelection:new(self, player_id),
-      ability = "LongSwrd" -- todo: resolve from element/name
+      ability = Ability.LongSwrd, -- todo: resolve from element/name
+      on_response = nil
     }
 
     if not debug then
@@ -120,6 +129,16 @@ function Mission:tick(elapsed)
   end
 
   -- now we can take a turn !
+
+
+  -- completed turn
+  for i, player_id in ipairs(self:list_players()) do
+    local data = self.player_data[player_id]
+
+    data.completed_turn = false
+  end
+
+  self.player_turn = true
 end
 
 function Mission:handle_tile_interaction(player_id, x, y, z)
@@ -129,7 +148,11 @@ end
 function Mission:handle_object_interaction(player_id, object_id)
   local player_data = self.player_data[player_id]
 
-  if player_data.completed_turn then return end
+  if player_data.completed_turn or player_data.on_response then
+    -- ignore selection as it's not our turn or waiting for a response
+    return
+  end
+
   -- panel selection detection
 
   local object = Net.get_object_by_id(self.area_id, object_id)
@@ -139,34 +162,129 @@ function Mission:handle_object_interaction(player_id, object_id)
     return
   end
 
-  player_data.panel_selection:select_panel(object)
-  Net.quiz_player(player_id, "Liberation", player_data.ability, "Pass")
+  local can_liberate = (
+    object.data.gid == self.BASIC_PANEL_GID or
+    object.data.gid == self.ITEM_PANEL_GID or
+    object.data.gid == self.DARK_HOLE_PANEL_GID or
+    object.data.gid == self.BONUS_PANEL_GID
+  )
+
+  if not can_liberate then
+    -- indestructable panels
+    Net.quiz_player(
+      player_id,
+      "Pass",
+      "Cancel"
+    )
+
+    player_data.on_response = function(response)
+      if response == 0 then
+        -- Pass
+        player_data.completed_turn = true
+      end
+    end
+
+    return
+  end
+
+  local ability = player_data.ability
+
+  local can_use_ability = (
+    ability.question and -- no question = passive ability
+    self.order_points > ability.cost and
+    (
+      object.data.gid == self.BASIC_PANEL_GID or
+      object.data.gid == self.ITEM_PANEL_GID
+    )
+  )
+
+  if not can_use_ability then
+    player_data.panel_selection:select_panel(object)
+
+    Net.quiz_player(
+      player_id,
+      "Liberation",
+      "Pass",
+      "Cancel"
+    )
+
+    player_data.on_response = function(response)
+      if response == 0 then
+        -- Liberation
+        liberate_panel(self, player_id)
+      elseif response == 1 then
+        -- Pass
+        player_data.completed_turn = true
+        player_data.panel_selection:clear()
+      else
+        -- Cancel
+        player_data.panel_selection:clear()
+      end
+    end
+
+    return
+  end
+
+
+  if object.data.gid == self.BASIC_PANEL_GID or object.data.gid == self.ITEM_PANEL_GID then
+    player_data.panel_selection:select_panel(object)
+
+    Net.quiz_player(
+      player_id,
+      "Liberation",
+      ability.name,
+      "Pass"
+    )
+
+    player_data.on_response = function(response)
+      if response == 0 then
+        -- Liberate
+        liberate_panel(self, player_id)
+      elseif response == 1 then
+        -- Ability
+        player_data.panel_selection:set_shape(ability.shape)
+
+        local mug = Net.get_player_mugshot(player_id)
+        Net.question_player(
+          player_id,
+          ability.question,
+          mug.texture_path,
+          mug.animation_path
+        )
+
+        -- callback hell
+        player_data.on_response = function(response)
+          player_data.on_response = nil
+
+          if response == 0 then
+            player_data.panel_selection:clear()
+            return
+          end
+
+          ability.activate(self, player_id)
+
+          player_data.completed_turn = true
+        end
+      elseif response == 2 then
+        -- Pass
+        player_data.completed_turn = true
+        player_data.panel_selection:clear()
+      end
+    end
+
+    return
+  end
+
 end
 
 function Mission:handle_player_response(player_id, response)
   local player_data = self.player_data[player_id]
 
-  if player_data.completed_turn then return end
+  local on_response = player_data.on_response
+  player_data.on_response = nil
 
-  -- todo: track if this is from the panel selection "quiz"
-  -- we get away with this as it's the only textbox atm
-
-  if response == 0 then
-    -- Liberate
-    player_data.panel_selection:liberate()
-  elseif response == 1 then
-    -- LongSwrd/ability
-    local shape = {
-      {1},
-      {1}
-    }
-
-    player_data.panel_selection:set_shape(shape)
-
-    -- todo: ask "Use [ability] (to liberate)?"
-  elseif response == 2 then
-    -- Pass
-    player_data.completed_turn = true
+  if on_response ~= nil then
+    on_response(response)
   end
 end
 
@@ -220,6 +338,20 @@ end
 -- private functions
 function is_panel(instance, object)
   return object.data.type == "tile" and object.data.gid >= instance.FIRST_PANEL_GID and object.data.gid <= instance.LAST_PANEL_GID
+end
+
+-- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
+function liberate_panel(instance, player_id)
+  local player_data = instance.player_data[player_id]
+
+  if instance.BONUS_PANEL_GID then
+    -- todo: give item
+  else
+    -- todo: battle
+    player_data.completed_turn = true
+  end
+
+  player_data.panel_selection:liberate()
 end
 
 -- exporting
