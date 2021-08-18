@@ -17,6 +17,20 @@ local Ability = {
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
     end
   },
+  ScrenDiv = {
+    name = "ScrenDiv",
+    question = "Use ScrenDiv to liberate?",
+    cost = 1,
+    shape = {
+      {1, 1, 1}
+    },
+    activate = function (instance, player_id)
+      local player_data = instance.player_data[player_id]
+      player_data.panel_selection:liberate()
+
+      -- todo: start battle, needs success handler? maybe on the player_data like on_response?
+    end
+  },
   PanelSearch = {
     name = "PanelSearch",
     question = "Search in this area?",
