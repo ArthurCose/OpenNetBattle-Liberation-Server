@@ -1,5 +1,7 @@
 local PanelSelection = require("scripts/liberations/panel_selection")
 
+local debug = true
+
 local Mission = {}
 
 function Mission:new(base_area_id, new_area_id, player_ids)
@@ -66,24 +68,26 @@ function Mission:begin()
       panel_selection = PanelSelection:new(self, player_id)
     }
 
-    -- reset - we want the total camera time taken by all players in parallel, not in sequence
-    total_camera_time = 0
+    if not debug then
+      -- reset - we want the total camera time taken by all players in parallel, not in sequence
+      total_camera_time = 0
 
-    -- control camera
-    Net.move_player_camera(player_id, spawn.x, spawn.y, spawn.z, hold_time)
-    total_camera_time = total_camera_time + hold_time
+      -- control camera
+      Net.move_player_camera(player_id, spawn.x, spawn.y, spawn.z, hold_time)
+      total_camera_time = total_camera_time + hold_time
 
-    for j, point in ipairs(self.points_of_interest) do
-      Net.slide_player_camera(player_id, point.x, point.y, point.z, slide_time)
-      Net.move_player_camera(player_id, point.x, point.y, point.z, hold_time)
+      for j, point in ipairs(self.points_of_interest) do
+        Net.slide_player_camera(player_id, point.x, point.y, point.z, slide_time)
+        Net.move_player_camera(player_id, point.x, point.y, point.z, hold_time)
 
-      total_camera_time = total_camera_time + slide_time + hold_time
+        total_camera_time = total_camera_time + slide_time + hold_time
+      end
+
+      Net.slide_player_camera(player_id, spawn.x, spawn.y, spawn.z, slide_time)
+      Net.unlock_player_camera(player_id)
+
+      total_camera_time = total_camera_time + slide_time
     end
-
-    Net.slide_player_camera(player_id, spawn.x, spawn.y, spawn.z, slide_time)
-    Net.unlock_player_camera(player_id)
-
-    total_camera_time = total_camera_time + slide_time
   end
 
   self.camera_wait_timer = total_camera_time
