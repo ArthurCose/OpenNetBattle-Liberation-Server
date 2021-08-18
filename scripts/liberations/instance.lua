@@ -26,7 +26,6 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     BASIC_PANEL_GID = FIRST_PANEL_GID,
     ITEM_PANEL_GID = FIRST_PANEL_GID + 1,
     DARK_HOLE_PANEL_GID = FIRST_PANEL_GID + 2,
-    INDESTRUCTABLE_PANEL_GID = FIRST_PANEL_GID + 3,
     BONUS_PANEL_GID = FIRST_PANEL_GID + 4,
     LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1
   }
@@ -170,7 +169,7 @@ function Mission:handle_object_interaction(player_id, object_id)
   )
 
   if not can_liberate then
-    -- indestructable panels
+    -- indestructible panels
     Net.quiz_player(
       player_id,
       "Pass",
