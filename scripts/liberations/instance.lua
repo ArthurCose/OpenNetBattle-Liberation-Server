@@ -1,6 +1,11 @@
+local PanelSelection = require("scripts/liberations/panel_selection")
+
 local Mission = {}
 
 function Mission:new(base_area_id, new_area_id, player_ids)
+  local FIRST_PANEL_GID = Net.get_tileset(base_area_id, "/server/assets/tiles/panels.tsx").first_gid
+  local TOTAL_PANEL_GIDS = 7
+
   local mission = {
     area_id = new_area_id,
     boss = nil,
@@ -11,7 +16,15 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     player_list = player_ids,
     ready_count = 0,
     player_data = {},
+    panels = {},
+    FIRST_PANEL_GID = FIRST_PANEL_GID,
+    LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1
   }
+
+  for i = 1, Net.get_height(base_area_id), 1 do
+    -- create row
+    mission.panels[i] = {}
+  end
 
   setmetatable(mission, self)
   self.__index = self
@@ -29,6 +42,10 @@ function Mission:new(base_area_id, new_area_id, player_ids)
       mission.enemies[#mission.enemies + 1] = object
     elseif object.name == "Point of Interest" then
       mission.points_of_interest[#mission.points_of_interest + 1] = object
+    elseif is_panel(mission, object) then
+      local x = math.floor(object.x) + 1
+      local y = math.floor(object.y) + 1
+      mission.panels[y][x] = object
     end
   end
 
@@ -45,7 +62,8 @@ function Mission:begin()
     -- create data
     self.player_data[player_id] = {
       health = 100,
-      comlpeted_turn = false
+      completed_turn = false,
+      panel_selection = PanelSelection:new(self, player_id)
     }
 
     -- reset - we want the total camera time taken by all players in parallel, not in sequence
@@ -104,7 +122,24 @@ function Mission:handle_tile_interaction(player_id, x, y, z)
 end
 
 function Mission:handle_object_interaction(player_id, object_id)
-  if self.player_data[player_id].completed_turn then return end
+  local player_data = self.player_data[player_id]
+
+  if player_data.completed_turn then return end
+  -- panel selection detection
+
+  local object = Net.get_object_by_id(self.area_id, object_id)
+
+  if not is_panel(self, object) then
+    -- out of range
+    return
+  end
+
+  -- default selection 1x1
+  local shape = {
+    {1}
+  }
+
+  player_data.panel_selection:set_selection(object, shape)
 end
 
 function Mission:handle_player_response(player_id, response)
@@ -145,4 +180,23 @@ function Mission:get_spawn_position()
   return Net.get_spawn_position(self.area_id)
 end
 
+-- helper functions
+function Mission:get_panel_at(x, y)
+  y = math.floor(y) + 1
+  local row = self.panels[y]
+
+  if row == nil then
+    return nil
+  end
+
+  x = math.floor(x) + 1
+  return row[x]
+end
+
+-- private functions
+function is_panel(instance, object)
+  return object.data.type == "tile" and object.data.gid >= instance.FIRST_PANEL_GID and object.data.gid <= instance.LAST_PANEL_GID
+end
+
+-- exporting
 return Mission
