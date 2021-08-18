@@ -10,6 +10,8 @@ function PanelSelection:new(instance, player_id)
   local panel_selection = {
     player_id = player_id,
     instance = instance,
+    root_panel = nil,
+    selection_direction = nil,
     objects = {},
     shape = {{}},
     LIBERATING_PANEL_GID = LIBERATING_PANEL_GID,
@@ -22,18 +24,33 @@ function PanelSelection:new(instance, player_id)
   return panel_selection
 end
 
+function PanelSelection:select_panel(panel_object)
+  self:clear()
+
+  self.root_panel = panel_object
+  self.shape = {{1}}
+
+  local player_pos = Net.get_player_position(self.player_id)
+  self.selection_direction = resolve_selection_direction(player_pos, panel_object)
+
+  -- create selection object
+  local object = generate_selection_object(self)
+  object.id = Net.create_object(self.instance.area_id, object)
+  self.objects = { object }
+end
+
 -- shape = [m][n] bool array, n being odd, bottom center is player position
-function PanelSelection:set_selection(panel_object, shape)
+function PanelSelection:set_shape(shape)
+  local root_panel = self.root_panel
+
   -- delete old objects
   self:clear()
 
   -- update shape
+  self.root_panel = root_panel
   self.shape = shape
 
   -- generating objects
-  local player_pos = Net.get_player_position(self.player_id)
-  local direction = resolve_selection_direction(player_pos, panel_object)
-
   for m, row in ipairs(shape) do
     local center = (#row - 1) / 2
 
@@ -47,32 +64,23 @@ function PanelSelection:set_selection(panel_object, shape)
       local offset_y = -(m - 1)
 
       -- adjusting the offset to the direction
-      if direction == Direction.DOWN_LEFT then
+      if self.selection_direction == Direction.DOWN_LEFT then
         offset_x = -offset_x -- flipped
         offset_y = -offset_y -- flipped
-      elseif direction == Direction.UP_LEFT then
+      elseif self.selection_direction == Direction.UP_LEFT then
         local old_offset_y = offset_y
         offset_y = -offset_x -- 🤷
         offset_x = old_offset_y -- negative for going left
-      elseif direction == Direction.DOWN_RIGHT then
+      elseif self.selection_direction == Direction.DOWN_RIGHT then
         local old_offset_y = offset_y
         offset_y = offset_x -- 🤷
         offset_x = -old_offset_y -- positive for going right
       end
 
       -- actually generating the object
-      local object = {
-        x = panel_object.x + offset_x + PANEL_OFFSET,
-        y = panel_object.y + offset_y + PANEL_OFFSET,
-        z = panel_object.z,
-        width = 2,
-        height = 1,
-        visible = true,
-        data = {
-          type = "tile",
-          gid = self.SELECTED_PANEL_GID,
-        }
-      }
+      local object = generate_selection_object(self)
+      object.x = object.x + offset_x
+      object.y = object.y + offset_y
 
       if self.instance:get_panel_at(object.x, object.y) == nil then
         goto continue
@@ -86,12 +94,29 @@ function PanelSelection:set_selection(panel_object, shape)
   end
 end
 
+function PanelSelection:liberate()
+  -- todo: add a callback to decide whether to liberate/take item
+  -- some navis only take items, such as numberman
+  -- some navis only liberate panels (destroying items) - napalmman
+
+  for _, object in pairs(self.objects) do
+    local panel_object = self.instance:get_panel_at(object.x, object.y)
+
+    -- todo: loot/call callback here?
+
+    Net.remove_object(self.instance.area_id, panel_object.id)
+  end
+
+  self:clear()
+end
+
 function PanelSelection:clear()
   -- delete objects
   for _, object in pairs(self.objects) do
     Net.remove_object(self.instance.area_id, object.id)
   end
 
+  self.root_panel = nil
   self.objects = {}
   self.shape = {{}}
 end
@@ -124,6 +149,21 @@ function resolve_selection_direction(player_pos, panel_object)
       return Direction.DOWN_LEFT
     end
   end
+end
+
+function generate_selection_object(panel_selection)
+  return {
+    x = panel_selection.root_panel.x + PANEL_OFFSET,
+    y = panel_selection.root_panel.y + PANEL_OFFSET,
+    z = panel_selection.root_panel.z,
+    width = 2,
+    height = 1,
+    visible = true,
+    data = {
+      type = "tile",
+      gid = panel_selection.SELECTED_PANEL_GID,
+    }
+  }
 end
 
 -- exports

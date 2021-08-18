@@ -65,7 +65,8 @@ function Mission:begin()
     self.player_data[player_id] = {
       health = 100,
       completed_turn = false,
-      panel_selection = PanelSelection:new(self, player_id)
+      panel_selection = PanelSelection:new(self, player_id),
+      ability = "LongSwrd" -- todo: resolve from element/name
     }
 
     if not debug then
@@ -138,16 +139,35 @@ function Mission:handle_object_interaction(player_id, object_id)
     return
   end
 
-  -- default selection 1x1
-  local shape = {
-    {1}
-  }
-
-  player_data.panel_selection:set_selection(object, shape)
+  player_data.panel_selection:select_panel(object)
+  Net.quiz_player(player_id, "Liberation", player_data.ability, "Pass")
 end
 
 function Mission:handle_player_response(player_id, response)
-  if self.player_data[player_id].completed_turn then return end
+  local player_data = self.player_data[player_id]
+
+  if player_data.completed_turn then return end
+
+  -- todo: track if this is from the panel selection "quiz"
+  -- we get away with this as it's the only textbox atm
+
+  if response == 0 then
+    -- Liberate
+    player_data.panel_selection:liberate()
+  elseif response == 1 then
+    -- LongSwrd/ability
+    local shape = {
+      {1},
+      {1}
+    }
+
+    player_data.panel_selection:set_shape(shape)
+
+    -- todo: ask "Use [ability] (to liberate)?"
+  elseif response == 2 then
+    -- Pass
+    player_data.completed_turn = true
+  end
 end
 
 function Mission:handle_player_transfer(player_id)
