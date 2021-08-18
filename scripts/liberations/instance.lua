@@ -299,6 +299,7 @@ function Mission:handle_player_disconnect(player_id, response)
     end
   end
 
+  self.player_data[player_id].panel_selection:clear()
   self.player_data[player_id] = nil
   self.ready_count = self.ready_count - 1
 end
