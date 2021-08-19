@@ -253,7 +253,7 @@ function Mission:handle_object_interaction(player_id, object_id)
 
 end
 
-function Mission:handle_player_response(player_id, response)
+function Mission:handle_textbox_response(player_id, response)
   local player_session = self.player_sessions[player_id]
 
   local on_response = player_session.on_response

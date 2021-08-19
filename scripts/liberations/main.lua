@@ -1,3 +1,6 @@
+-- random may be called in required scripts, need to set the seed
+math.randomseed(os.time())
+
 local Instance = require("scripts/liberations/instance")
 local Parties = require("scripts/libs/parties")
 
@@ -15,7 +18,7 @@ function tick(elapsed)
     instance:tick(elapsed)
 
     if #instance:list_players() == 0 then
-      dead_instances[#dead_instances] = area_id
+      dead_instances[#dead_instances + 1] = area_id
     end
   end
 
@@ -93,7 +96,7 @@ function handle_textbox_response(player_id, response)
   local area_id = Net.get_player_area(player_id)
 
   if instances[area_id] ~= nil then
-    instances[area_id]:handle_player_response(player_id, response)
+    instances[area_id]:handle_textbox_response(player_id, response)
     return
   end
 
@@ -162,7 +165,7 @@ function transfer_players_to_new_instance(base_area, player_ids)
 end
 
 function handle_player_transfer(player_id)
-  for i, instance in ipairs(instances) do
+  for _, instance in pairs(instances) do
     if instance:has_player(player_id) then
       instance:handle_player_transfer(player_id)
       break
@@ -174,7 +177,7 @@ function handle_player_disconnect(player_id)
   player_state_map[player_id] = nil
   Parties.leave(player_id)
 
-  for i, instance in ipairs(instances) do
+  for _, instance in pairs(instances) do
     if instance:has_player(player_id) then
       instance:handle_player_disconnect(player_id)
       break
