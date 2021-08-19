@@ -312,14 +312,16 @@ end
 function liberate_panel(instance, player_id)
   local player_session = instance.player_sessions[player_id]
 
-  if instance.BONUS_PANEL_GID then
+  local panel = player_session.panel_selection.root_panel
+
+  player_session.panel_selection:liberate()
+
+  if panel.data.gid == instance.BONUS_PANEL_GID then
     -- todo: give item
   else
     -- todo: battle
     player_session:complete_turn()
   end
-
-  player_session.panel_selection:liberate()
 end
 
 function take_enemy_turn(instance)
