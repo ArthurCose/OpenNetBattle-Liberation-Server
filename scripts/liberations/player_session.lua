@@ -18,6 +18,9 @@ function PlayerSession:new(instance, player_id)
   setmetatable(player_session, self)
   self.__index = self
 
+  Net.set_player_health(player_id, player_session.health)
+  Net.set_player_max_health(player_id, player_session.max_health)
+
   return player_session
 end
 
