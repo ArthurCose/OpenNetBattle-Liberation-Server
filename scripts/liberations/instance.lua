@@ -14,7 +14,6 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     boss = nil,
     enemies = {},
     points_of_interest = {},
-    camera_wait_timer = 0,
     player_turn = true,
     player_list = player_ids,
     ready_count = 0,
@@ -78,6 +77,8 @@ function Mission:begin()
     }
 
     if not debug then
+      Net.lock_player_input(player_id)
+
       -- reset - we want the total camera time taken by all players in parallel, not in sequence
       total_camera_time = 0
 
@@ -99,7 +100,14 @@ function Mission:begin()
     end
   end
 
-  self.camera_wait_timer = total_camera_time
+  if not debug then
+    -- release players after camera animation
+    Async.sleep(total_camera_time).and_then(function()
+      for i, player_id in ipairs(self.player_list) do
+        Net.unlock_player_input(player_id)
+      end
+    end)
+  end
 end
 
 function Mission:tick(elapsed)
@@ -120,12 +128,6 @@ function Mission:tick(elapsed)
 
   -- not our turn, nothing for us to do
   if self.player_turn then return end
-
-  if self.camera_wait_timer > 0 then
-    -- waiting for the camera to complete motion
-    self.camera_wait_timer = self.camera_wait_timer - elapsed
-    return
-  end
 
   -- now we can take a turn !
 
