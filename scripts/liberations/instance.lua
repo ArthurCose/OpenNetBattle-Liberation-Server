@@ -1,5 +1,4 @@
-local Ability = require("scripts/liberations/ability")
-local PanelSelection = require("scripts/liberations/panel_selection")
+local PlayerSession = require("scripts/liberations/player_session")
 
 local debug = true
 
@@ -14,10 +13,9 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     boss = nil,
     enemies = {},
     points_of_interest = {},
-    player_turn = true,
     player_list = player_ids,
     ready_count = 0,
-    player_data = {},
+    player_sessions = {},
     order_points = 3,
     MAX_ORDER_POINTS = 8,
     panels = {},
@@ -68,13 +66,7 @@ function Mission:begin()
 
   for i, player_id in ipairs(self.player_list) do
     -- create data
-    self.player_data[player_id] = {
-      health = 100,
-      completed_turn = false,
-      panel_selection = PanelSelection:new(self, player_id),
-      ability = Ability.LongSwrd, -- todo: resolve from element/name
-      on_response = nil
-    }
+    self.player_sessions[player_id] = PlayerSession:new(self, player_id)
 
     if not debug then
       Net.lock_player_input(player_id)
@@ -111,45 +103,21 @@ function Mission:begin()
 end
 
 function Mission:tick(elapsed)
-  if self.player_turn then
-    -- see if players completed their turn
-    -- (players complete their turn outside of tick)
-    self.player_turn = false
-
-    for i, player_id in ipairs(self:list_players()) do
-      local data = self.player_data[player_id]
-
-      -- if someone has not completed their turn, it is still the players' turn
-      if not data.completed_turn then
-        self.player_turn = true
-      end
-    end
+  if self.ready_count == #self.player_list then
+    self.ready_count = 0
+    take_enemy_turn(self)
+    -- now we can take a turn !
   end
-
-  -- not our turn, nothing for us to do
-  if self.player_turn then return end
-
-  -- now we can take a turn !
-
-
-  -- completed turn
-  for i, player_id in ipairs(self:list_players()) do
-    local data = self.player_data[player_id]
-
-    data.completed_turn = false
-  end
-
-  self.player_turn = true
 end
 
 function Mission:handle_tile_interaction(player_id, x, y, z)
-  if self.player_data[player_id].completed_turn then return end
+  if self.player_sessions[player_id].completed_turn then return end
 end
 
 function Mission:handle_object_interaction(player_id, object_id)
-  local player_data = self.player_data[player_id]
+  local player_session = self.player_sessions[player_id]
 
-  if player_data.completed_turn or player_data.on_response then
+  if player_session.completed_turn or player_session.on_response then
     -- ignore selection as it's not our turn or waiting for a response
     return
   end
@@ -178,17 +146,17 @@ function Mission:handle_object_interaction(player_id, object_id)
       "Cancel"
     )
 
-    player_data.on_response = function(response)
+    player_session.on_response = function(response)
       if response == 0 then
         -- Pass
-        player_data.completed_turn = true
+        player_session:complete_turn()
       end
     end
 
     return
   end
 
-  local ability = player_data.ability
+  local ability = player_session.ability
 
   local can_use_ability = (
     ability.question and -- no question = passive ability
@@ -200,7 +168,7 @@ function Mission:handle_object_interaction(player_id, object_id)
   )
 
   if not can_use_ability then
-    player_data.panel_selection:select_panel(object)
+    player_session.panel_selection:select_panel(object)
 
     Net.quiz_player(
       player_id,
@@ -209,17 +177,16 @@ function Mission:handle_object_interaction(player_id, object_id)
       "Cancel"
     )
 
-    player_data.on_response = function(response)
+    player_session.on_response = function(response)
       if response == 0 then
         -- Liberation
         liberate_panel(self, player_id)
       elseif response == 1 then
         -- Pass
-        player_data.completed_turn = true
-        player_data.panel_selection:clear()
+        player_session:complete_turn()
       else
         -- Cancel
-        player_data.panel_selection:clear()
+        player_session.panel_selection:clear()
       end
     end
 
@@ -228,7 +195,7 @@ function Mission:handle_object_interaction(player_id, object_id)
 
 
   if object.data.gid == self.BASIC_PANEL_GID or object.data.gid == self.ITEM_PANEL_GID then
-    player_data.panel_selection:select_panel(object)
+    player_session.panel_selection:select_panel(object)
 
     Net.quiz_player(
       player_id,
@@ -237,14 +204,15 @@ function Mission:handle_object_interaction(player_id, object_id)
       "Pass"
     )
 
-    player_data.on_response = function(response)
+    player_session.on_response = function(response)
       if response == 0 then
         -- Liberate
         liberate_panel(self, player_id)
       elseif response == 1 then
         -- Ability
-        player_data.panel_selection:set_shape(ability.shape)
+        player_session.panel_selection:set_shape(ability.shape)
 
+        -- ask if we should use the ability
         local mug = Net.get_player_mugshot(player_id)
         Net.question_player(
           player_id,
@@ -254,22 +222,21 @@ function Mission:handle_object_interaction(player_id, object_id)
         )
 
         -- callback hell
-        player_data.on_response = function(response)
-          player_data.on_response = nil
+        player_session.on_response = function(response)
+          player_session.on_response = nil
 
           if response == 0 then
-            player_data.panel_selection:clear()
+            -- No
+            player_session.panel_selection:clear()
             return
           end
 
-          ability.activate(self, player_id)
-
-          player_data.completed_turn = true
+          -- Yes
+          ability.activate(self, player_session)
         end
       elseif response == 2 then
         -- Pass
-        player_data.completed_turn = true
-        player_data.panel_selection:clear()
+        player_session:complete_turn()
       end
     end
 
@@ -279,10 +246,10 @@ function Mission:handle_object_interaction(player_id, object_id)
 end
 
 function Mission:handle_player_response(player_id, response)
-  local player_data = self.player_data[player_id]
+  local player_session = self.player_sessions[player_id]
 
-  local on_response = player_data.on_response
-  player_data.on_response = nil
+  local on_response = player_session.on_response
+  player_session.on_response = nil
 
   if on_response ~= nil then
     on_response(response)
@@ -290,7 +257,6 @@ function Mission:handle_player_response(player_id, response)
 end
 
 function Mission:handle_player_transfer(player_id)
-  self.ready_count = self.ready_count + 1
 end
 
 function Mission:handle_player_disconnect(player_id, response)
@@ -301,9 +267,8 @@ function Mission:handle_player_disconnect(player_id, response)
     end
   end
 
-  self.player_data[player_id].panel_selection:clear()
-  self.player_data[player_id] = nil
-  self.ready_count = self.ready_count - 1
+  self.player_sessions[player_id]:handle_disconnect()
+  self.player_sessions[player_id] = nil
 end
 
 function Mission:has_player(player_id)
@@ -344,16 +309,23 @@ end
 
 -- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
 function liberate_panel(instance, player_id)
-  local player_data = instance.player_data[player_id]
+  local player_session = instance.player_sessions[player_id]
 
   if instance.BONUS_PANEL_GID then
     -- todo: give item
   else
     -- todo: battle
-    player_data.completed_turn = true
+    player_session:complete_turn()
   end
 
-  player_data.panel_selection:liberate()
+  player_session.panel_selection:liberate()
+end
+
+function take_enemy_turn(instance)
+  -- completed turn, give turn back to players
+  for i, player_session in pairs(instance.player_sessions) do
+    player_session:give_turn()
+  end
 end
 
 -- exporting

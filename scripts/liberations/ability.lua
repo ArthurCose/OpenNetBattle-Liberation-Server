@@ -10,11 +10,10 @@ local Ability = {
       {1},
       {1}
     },
-    activate = function (instance, player_id)
-      local player_data = instance.player_data[player_id]
-      player_data.panel_selection:liberate()
-
+    activate = function (instance, player_session)
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
+      player_session.panel_selection:liberate()
+      player_session:complete_turn()
     end
   },
   ScrenDiv = {
@@ -24,11 +23,10 @@ local Ability = {
     shape = {
       {1, 1, 1}
     },
-    activate = function (instance, player_id)
-      local player_data = instance.player_data[player_id]
-      player_data.panel_selection:liberate()
-
+    activate = function (instance, player_session)
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
+      player_session.panel_selection:liberate()
+      player_session:complete_turn()
     end
   },
   PanelSearch = {
@@ -40,7 +38,7 @@ local Ability = {
       {1},
       {1}
     },
-    activate = function (instance, player_id)
+    activate = function (instance, player_session)
       -- todo: use Async.sleep in a coroutine+loop to adjust shape and play a sound
       -- https://www.youtube.com/watch?v=Q62Ek8_KP1Q&t=3887s
     end
