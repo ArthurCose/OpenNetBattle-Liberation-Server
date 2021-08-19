@@ -331,8 +331,8 @@ function liberate_panel(instance, player_session)
 end
 
 function take_enemy_turn(instance)
-  local hold_time = .1
-  local slide_time = .7
+  local hold_time = .15
+  local slide_time = .5
 
   local co = coroutine.create(function()
     for i, enemy in ipairs(instance.enemies) do
