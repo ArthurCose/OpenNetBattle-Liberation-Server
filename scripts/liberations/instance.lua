@@ -44,6 +44,7 @@ function Mission:new(base_area_id, new_area_id, player_ids)
 
     if object.name == "Boss" then
       mission.boss = object
+      table.insert(mission.enemies, 1, object) -- make the boss the first enemy in the list
     elseif object.name == "Enemy" then
       mission.enemies[#mission.enemies + 1] = object
     elseif object.name == "Point of Interest" then
@@ -322,10 +323,42 @@ function liberate_panel(instance, player_id)
 end
 
 function take_enemy_turn(instance)
-  -- completed turn, give turn back to players
-  for i, player_session in pairs(instance.player_sessions) do
-    player_session:give_turn()
-  end
+  local hold_time = .1
+  local slide_time = .7
+
+  local co = coroutine.create(function()
+    for i, enemy in ipairs(instance.enemies) do
+      for j, player_id in ipairs(instance.player_list) do
+        Net.slide_player_camera(player_id, enemy.x, enemy.y, enemy.z, slide_time)
+      end
+
+      -- wait until the camera is done moving
+      Async.await(Async.sleep(slide_time))
+
+      -- todo: attack
+
+      -- wait a short amount of time to look nicer if there was no action taken
+      Async.await(Async.sleep(hold_time))
+    end
+
+    -- completed turn, return camera to players
+    for i, player_session in pairs(instance.player_sessions) do
+      local player_pos = Net.get_player_position(player_session.player_id)
+      Net.slide_player_camera(player_session.player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
+      Net.unlock_player_camera(player_session.player_id)
+      player_session:give_turn()
+    end
+
+    -- wait for the camera
+    Async.await(Async.sleep(slide_time))
+
+    -- give turn back to players
+    for i, player_session in pairs(instance.player_sessions) do
+      player_session:give_turn()
+    end
+  end)
+
+  Async.promisify(co)
 end
 
 -- exporting
