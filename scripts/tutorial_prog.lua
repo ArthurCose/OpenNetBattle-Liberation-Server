@@ -18,6 +18,7 @@ Net.create_bot(id, {
   x = spawn.x,
   y = spawn.y,
   z = spawn.z,
+  direction = Direction.DOWN_RIGHT,
   solid = solid
 })
 
@@ -48,6 +49,7 @@ function list_options(player_id)
 end
 
 function handle_actor_interaction(player_id, other_id)
+  if other_id ~= id then return end
   if player_states[player_id] ~= nil then return end
 
   local player_pos = Net.get_player_position(player_id)
@@ -127,7 +129,7 @@ function loop_help(player_id)
   list_options(player_id)
 end
 
-function handle_player_response(player_id, response)
+function handle_textbox_response(player_id, response)
   update_state(response_handlers, player_id, response)
 end
 
