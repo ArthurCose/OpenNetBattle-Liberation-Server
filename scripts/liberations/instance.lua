@@ -152,7 +152,7 @@ function Mission:handle_object_interaction(player_id, object_id)
     player_session.on_response = function(response)
       if response == 0 then
         -- Pass
-        player_session:complete_turn()
+        player_session:pass_turn()
       end
 
       -- Cancel
@@ -189,7 +189,7 @@ function Mission:handle_object_interaction(player_id, object_id)
         liberate_panel(self, player_session)
       elseif response == 1 then
         -- Pass
-        player_session:complete_turn()
+        player_session:pass_turn()
       else
         -- Cancel
         player_session.panel_selection:clear()
@@ -244,7 +244,7 @@ function Mission:handle_object_interaction(player_id, object_id)
         end
       elseif response == 2 then
         -- Pass
-        player_session:complete_turn()
+        player_session:pass_turn()
       end
     end
 
