@@ -132,6 +132,8 @@ function Mission:handle_object_interaction(player_id, object_id)
     return
   end
 
+  Net.lock_player_input(player_id)
+
   local can_liberate = (
     object.data.gid == self.BASIC_PANEL_GID or
     object.data.gid == self.ITEM_PANEL_GID or
@@ -152,6 +154,9 @@ function Mission:handle_object_interaction(player_id, object_id)
         -- Pass
         player_session:complete_turn()
       end
+
+      -- Cancel
+      Net.unlock_player_input(player_id)
     end
 
     return
@@ -181,13 +186,14 @@ function Mission:handle_object_interaction(player_id, object_id)
     player_session.on_response = function(response)
       if response == 0 then
         -- Liberation
-        liberate_panel(self, player_id)
+        liberate_panel(self, player_session)
       elseif response == 1 then
         -- Pass
         player_session:complete_turn()
       else
         -- Cancel
         player_session.panel_selection:clear()
+        Net.unlock_player_input(player_id)
       end
     end
 
@@ -208,7 +214,7 @@ function Mission:handle_object_interaction(player_id, object_id)
     player_session.on_response = function(response)
       if response == 0 then
         -- Liberate
-        liberate_panel(self, player_id)
+        liberate_panel(self, player_session)
       elseif response == 1 then
         -- Ability
         player_session.panel_selection:set_shape(ability.shape)
@@ -229,6 +235,7 @@ function Mission:handle_object_interaction(player_id, object_id)
           if response == 0 then
             -- No
             player_session.panel_selection:clear()
+            Net.unlock_player_input(player_id)
             return
           end
 
@@ -309,15 +316,14 @@ function is_panel(instance, object)
 end
 
 -- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
-function liberate_panel(instance, player_id)
-  local player_session = instance.player_sessions[player_id]
-
+function liberate_panel(instance, player_session)
   local panel = player_session.panel_selection.root_panel
 
   player_session.panel_selection:liberate()
 
   if panel.data.gid == instance.BONUS_PANEL_GID then
     -- todo: give item
+    Net.unlock_player_input(player_session.player_id)
   else
     -- todo: battle
     player_session:complete_turn()
@@ -348,7 +354,6 @@ function take_enemy_turn(instance)
       local player_pos = Net.get_player_position(player_session.player_id)
       Net.slide_player_camera(player_session.player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
       Net.unlock_player_camera(player_session.player_id)
-      player_session:give_turn()
     end
 
     -- wait for the camera
