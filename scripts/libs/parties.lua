@@ -63,7 +63,7 @@ function Parties.tick(elapsed)
 
   -- reverse loop remove dead requests
   for i=1, #dead_requests do
-    local request_index = dead_requests[#dead_requests + 1 - i];
+    local request_index = dead_requests[#dead_requests + 1 - i]
     table.remove(pending_requests, request_index)
   end
 
