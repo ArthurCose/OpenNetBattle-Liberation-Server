@@ -82,13 +82,20 @@ function PlayerSession:pass_turn()
 end
 
 function PlayerSession:liberate_panels(panels)
-  for _, panel in ipairs(panels) do
-    self.instance:remove_panel(panel)
-  end
+  local co = coroutine.create(function()
+    -- allow time for the player to see the liberation range
+    Async.await(Async.sleep(1))
 
-  self.panel_selection:clear()
+    for _, panel in ipairs(panels) do
+      self.instance:remove_panel(panel)
+    end
 
-  return self.player:message_with_mug("Yeah!\nI liberated it!")
+    self.panel_selection:clear()
+
+    Async.await(self.player:message_with_mug("Yeah!\nI liberated it!"))
+  end)
+
+  return Async.promisify(co)
 end
 
 -- returns a promise that resolves after looting
