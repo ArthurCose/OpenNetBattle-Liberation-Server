@@ -231,7 +231,7 @@ function Mission:handle_object_interaction(player_id, object_id)
         player_session:get_ability_permission()
       elseif response == 2 then
         -- Pass
-        self.panel_selection:clear()
+        player_session.panel_selection:clear()
         player_session:get_pass_turn_permission()
       end
     end)

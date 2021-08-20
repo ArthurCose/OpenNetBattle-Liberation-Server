@@ -89,7 +89,7 @@ function PlayerSession:get_pass_turn_permission()
     end
 
     -- Yes
-    self.ability.activate(self.instance, self)
+    self:pass_turn()
   end)
 end
 
