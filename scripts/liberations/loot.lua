@@ -108,10 +108,10 @@ Loot.DEFAULT_POOL = {
 
 Loot.BONUS_POOL = {
   Loot.HEART,
-  -- Loot.CHIP,
+  Loot.CHIP,
   Loot.ORDER_POINT,
-  -- Loot.INVINCIBILITY,
-  -- Loot.MAJOR_HIT,
+  Loot.INVINCIBILITY,
+  Loot.MAJOR_HIT,
 }
 
 Loot.TEST_POOL = {
@@ -161,7 +161,7 @@ end
 -- resolved value is a function that cleans up the bot
 function Loot.spawn_randomized_item_bot(loot_pool, item_index, area_id, x, y, z)
   local target_duration = 2
-  local frame_duration = .05
+  local frame_duration = .075
   local total_frames = math.ceil(target_duration / frame_duration)
 
   local start_index = (item_index - total_frames - 2) % #loot_pool + 1
@@ -217,24 +217,54 @@ end
 function Loot.loot_item_panel(instance, player_session, panel)
   local slide_time = .1
 
+  local spawn_x = math.floor(panel.x) + .5
+  local spawn_y = math.floor(panel.y) + .5
+  local spawn_z = panel.z
+
   Net.slide_player_camera(
     player_session.player_id,
-    math.min(panel.x) + .5,
-    math.min(panel.y) + .5,
-    panel.z,
+    spawn_x,
+    spawn_y,
+    spawn_z,
     slide_time
   )
 
   local co = coroutine.create(function()
     Async.await(Async.sleep(slide_time))
 
-    local spawn_x = math.floor(panel.x) + .5
-    local spawn_y = math.floor(panel.y) + .5
-    local spawn_z = panel.z
-
     local remove_item_bot = Async.await(Loot.spawn_item_bot(panel.loot, instance.area_id, spawn_x, spawn_y, spawn_z))
 
     Async.await(panel.loot.activate(instance, player_session))
+
+    remove_item_bot()
+    Net.unlock_player_camera()
+  end)
+
+  return Async.promisify(co)
+end
+
+-- returns a promise, resolves when looting is completed
+function Loot.loot_bonus_panel(instance, player_session, panel)
+  local loot_index = math.random(#Loot.BONUS_POOL)
+
+  local spawn_x = math.floor(panel.x) + .5
+  local spawn_y = math.floor(panel.y) + .5
+  local spawn_z = panel.z
+
+  local co = coroutine.create(function()
+    local remove_item_bot = Async.await(
+      Loot.spawn_randomized_item_bot(
+        Loot.BONUS_POOL,
+        loot_index,
+        instance.area_id,
+        spawn_x,
+        spawn_y,
+        spawn_z
+      )
+    )
+
+    local loot = Loot.BONUS_POOL[loot_index]
+    Async.await(loot.activate(instance, player_session))
 
     remove_item_bot()
   end)

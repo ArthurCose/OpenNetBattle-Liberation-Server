@@ -326,7 +326,7 @@ function liberate_panel(instance, player_session)
       instance:remove_panel(panel)
       player_session.panel_selection:clear()
 
-      -- todo: give item
+      Async.await(Loot.loot_bonus_panel(instance, player_session, panel))
 
       Net.unlock_player_input(player_session.player_id)
     else
