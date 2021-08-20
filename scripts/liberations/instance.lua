@@ -161,11 +161,11 @@ function Mission:handle_object_interaction(player_id, object_id)
     quiz_promise.and_then(function(response)
         if response == 0 then
           -- Pass
-          player_session:pass_turn()
+          player_session:get_pass_turn_permission()
+        else
+          -- Cancel
+          Net.unlock_player_input(player_id)
         end
-
-        -- Cancel
-        Net.unlock_player_input(player_id)
       end)
 
     return
