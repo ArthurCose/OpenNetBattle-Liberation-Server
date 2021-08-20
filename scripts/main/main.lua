@@ -1,7 +1,7 @@
 -- random may be called in required scripts, need to set the seed
 math.randomseed(os.time())
 
-local Instance = require("scripts/liberations/instance")
+local Instance = require("scripts/main/liberations/instance")
 local Parties = require("scripts/libs/parties")
 
 local waiting_area = "default"

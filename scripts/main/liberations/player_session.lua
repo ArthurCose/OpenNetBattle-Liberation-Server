@@ -1,6 +1,6 @@
-local Ability = require("scripts/liberations/ability")
-local PanelSelection = require("scripts/liberations/panel_selection")
-local Loot = require("scripts/liberations/loot")
+local Ability = require("scripts/main/liberations/ability")
+local PanelSelection = require("scripts/main/liberations/panel_selection")
+local Loot = require("scripts/main/liberations/loot")
 
 local PlayerSession = {}
 

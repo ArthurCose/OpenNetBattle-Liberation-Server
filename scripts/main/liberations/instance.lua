@@ -1,5 +1,5 @@
-local PlayerSession = require("scripts/liberations/player_session")
-local Loot = require("scripts/liberations/loot")
+local PlayerSession = require("scripts/main/liberations/player_session")
+local Loot = require("scripts/main/liberations/loot")
 
 local debug = true
 
