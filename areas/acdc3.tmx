@@ -108,8 +108,7 @@
   <object id="76" gid="8" x="257" y="193" width="50" height="30"/>
   <object id="77" gid="8" x="225" y="193" width="50" height="30"/>
   <object id="78" gid="8" x="225" y="161" width="50" height="30"/>
-  <object id="79" gid="8" x="256" y="128" width="50" height="30"/>
-  <object id="80" gid="8" x="257" y="129" width="50" height="30"/>
+  <object id="79" gid="8" x="257" y="129" width="50" height="30"/>
   <object id="81" gid="8" x="225" y="129" width="50" height="30"/>
   <object id="82" gid="9" x="33" y="417" width="50" height="30"/>
  </objectgroup>
