@@ -78,6 +78,8 @@ function handle_actor_interaction(player_id, other_player_id)
         Parties.accept(party_request)
       end
     end)
+
+    return
   end
 
   -- try making a party request
