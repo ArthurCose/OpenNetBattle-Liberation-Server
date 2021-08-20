@@ -12,7 +12,7 @@ local Ability = {
   Guard = {}, -- passive, knightman's ability
   LongSwrd = {
     name = "LongSwrd",
-    question = "Use LongSwrd to liberate?",
+    question = "Use LongSwrd?",
     cost = 1,
     shape = {
       {1},
