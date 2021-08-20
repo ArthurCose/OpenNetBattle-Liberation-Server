@@ -124,7 +124,7 @@ end
 function Mission:handle_object_interaction(player_id, object_id)
   local player_session = self.player_sessions[player_id]
 
-  if player_session.completed_turn or player_session.on_response then
+  if player_session.completed_turn or Net.is_player_in_widget(player_id) then
     -- ignore selection as it's not our turn or waiting for a response
     return
   end
@@ -156,21 +156,17 @@ function Mission:handle_object_interaction(player_id, object_id)
 
   if not can_liberate then
     -- indestructible panels
-    Net.quiz_player(
-      player_id,
-      "Pass",
-      "Cancel"
-    )
+    local quiz_promise = player_session:quiz("Pass", "Cancel")
 
-    player_session.on_response = function(response)
-      if response == 0 then
-        -- Pass
-        player_session:pass_turn()
-      end
+    quiz_promise.and_then(function(response)
+        if response == 0 then
+          -- Pass
+          player_session:pass_turn()
+        end
 
-      -- Cancel
-      Net.unlock_player_input(player_id)
-    end
+        -- Cancel
+        Net.unlock_player_input(player_id)
+      end)
 
     return
   end
@@ -189,26 +185,26 @@ function Mission:handle_object_interaction(player_id, object_id)
   if not can_use_ability then
     player_session.panel_selection:select_panel(panel)
 
-    Net.quiz_player(
-      player_id,
+    local quiz_promise = player_session:quiz(
       "Liberation",
       "Pass",
       "Cancel"
     )
 
-    player_session.on_response = function(response)
+    quiz_promise.and_then(function(response)
       if response == 0 then
         -- Liberation
         liberate_panel(self, player_session)
       elseif response == 1 then
         -- Pass
-        player_session:pass_turn()
+        player_session.panel_selection:clear()
+        player_session:get_pass_turn_permission()
       else
         -- Cancel
         player_session.panel_selection:clear()
         Net.unlock_player_input(player_id)
       end
-    end
+    end)
 
     return
   end
@@ -217,14 +213,13 @@ function Mission:handle_object_interaction(player_id, object_id)
   if panel.data.gid == self.BASIC_PANEL_GID or panel.data.gid == self.ITEM_PANEL_GID then
     player_session.panel_selection:select_panel(panel)
 
-    Net.quiz_player(
-      player_id,
+    local quiz_promise = player_session:quiz(
       "Liberation",
       ability.name,
       "Pass"
     )
 
-    player_session.on_response = function(response)
+    quiz_promise.and_then(function(response)
       if response == 0 then
         -- Liberate
         liberate_panel(self, player_session)
@@ -233,33 +228,13 @@ function Mission:handle_object_interaction(player_id, object_id)
         player_session.panel_selection:set_shape(ability.shape)
 
         -- ask if we should use the ability
-        local mug = Net.get_player_mugshot(player_id)
-        Net.question_player(
-          player_id,
-          ability.question,
-          mug.texture_path,
-          mug.animation_path
-        )
-
-        -- callback hell
-        player_session.on_response = function(response)
-          player_session.on_response = nil
-
-          if response == 0 then
-            -- No
-            player_session.panel_selection:clear()
-            Net.unlock_player_input(player_id)
-            return
-          end
-
-          -- Yes
-          ability.activate(self, player_session)
-        end
+        player_session:get_ability_permission()
       elseif response == 2 then
         -- Pass
-        player_session:pass_turn()
+        self.panel_selection:clear()
+        player_session:get_pass_turn_permission()
       end
-    end
+    end)
 
     return
   end
@@ -269,12 +244,7 @@ end
 function Mission:handle_textbox_response(player_id, response)
   local player_session = self.player_sessions[player_id]
 
-  local on_response = player_session.on_response
-  player_session.on_response = nil
-
-  if on_response ~= nil then
-    on_response(response)
-  end
+  player_session:handle_textbox_response(response)
 end
 
 function Mission:handle_player_transfer(player_id)
@@ -349,34 +319,36 @@ end
 function liberate_panel(instance, player_session)
   local panel = player_session.panel_selection.root_panel
 
-  if panel.data.gid == instance.BONUS_PANEL_GID then
-    player_session:message_with_mug("A BonusPanel!")
+  local co = coroutine.create(function()
+    if panel.data.gid == instance.BONUS_PANEL_GID then
+      Async.await(player_session:message_with_mug("A BonusPanel!"))
 
-    player_session.on_response = function()
       instance:remove_panel(panel)
       player_session.panel_selection:clear()
+
       -- todo: give item
-      Net.unlock_player_input(player_session.player_id)
-    end
-  else
-    player_session:message_with_mug("Let's do it! Liberate panels!")
 
-    player_session.on_response = function()
+      Net.unlock_player_input(player_session.player_id)
+    else
+      Async.await(player_session:message_with_mug("Let's do it! Liberate panels!"))
+
       -- todo: battle
+
       instance:remove_panel(panel)
       player_session.panel_selection:clear()
-      player_session:message_with_mug("Yeah!\nI liberated it!")
-      player_session.on_response = function()
-        if panel.loot then
-          Loot.loot_item_panel(instance, player_session, panel).and_then(function()
-            player_session:complete_turn()
-          end)
-        else
-          player_session:complete_turn()
-        end
+
+      Async.await(player_session:message_with_mug("Yeah!\nI liberated it!"))
+
+      if panel.loot then
+        -- loot the panel if it has loot
+        Async.await(Loot.loot_item_panel(instance, player_session, panel))
       end
+
+      player_session:complete_turn()
     end
-  end
+  end)
+
+  Async.promisify(co)
 end
 
 function take_enemy_turn(instance)

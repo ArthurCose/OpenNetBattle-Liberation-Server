@@ -6,77 +6,84 @@ local Loot = {
   HEART = {
     animation = "HEART",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
-        player_session:message_with_mug("I found\na heart!")
-        player_session:heal(player_session.max_health / 2)
-        resolve()
+      return Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found\na heart!").and_then(function()
+          player_session:heal(player_session.max_health / 2)
+          resolve()
+        end)
       end)
     end
   },
   CHIP = {
     animation = "CHIP",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
-        player_session:message_with_mug("I found a\nBattleChip!")
-        resolve()
+      return Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found a\nBattleChip!").and_then(function()
+          resolve()
+        end)
       end)
     end
   },
   ZENNY = {
     animation = "ZENNY",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
-        player_session:message_with_mug("I found some\nMonies!")
-        resolve()
+      return Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found some\nMonies!").and_then(function()
+          resolve()
+        end)
       end)
     end
   },
   BUGFRAG = {
     animation = "BUGFRAG",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
-        player_session:message_with_mug("I found a\nBugFrag!")
-        resolve()
+      return Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found a\nBugFrag!").and_then(function()
+          resolve()
+        end)
       end)
     end
   },
   ORDER_POINT = {
     animation = "ORDER_POINT",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
+      return Async.create_promise(function(resolve)
         player_session:message_with_mug("I found\nOrder Points!")
 
         local previous_points = instance.order_points
         instance.order_points = math.min(instance.order_points + 3, instance.MAX_ORDER_POINTS)
 
         local recovered_points = instance.order_points - previous_points
-        Net.message_player(player_session.player_id, recovered_points .. "\nOrder Pts Recovered!")
-        resolve()
+        player_session:message(recovered_points .. "\nOrder Pts Recovered!").and_then(function()
+          resolve()
+        end)
       end)
     end
   },
   INVINCIBILITY = {
     animation = "INVINCIBILITY",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
-        Net.message_player(player_session.player_id, "Team becomes invincible for\n 1 phase!!")
-        resolve()
+      return Async.create_promise(function(resolve)
+        player_session:message("Team becomes invincible for\n 1 phase!!").and_then(function()
+          resolve()
+        end)
       end)
     end
   },
   MAJOR_HIT = {
     animation = "MAJOR_HIT",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
-        Net.message_player(player_session.player_id, "Damages the closest enemy the most!")
-        resolve()
+      return Async.create_promise(function(resolve)
+        player_session:message("Damages the closest enemy the most!").and_then(function()
+          resolve()
+        end)
       end)
     end
   },
   KEY = {
     animation = "KEY",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
+      return Async.create_promise(function(resolve)
         resolve()
       end)
     end
@@ -84,7 +91,7 @@ local Loot = {
   TRAP = {
     animation = "TRAP",
     activate = function(instance, player_session)
-      Async.create_promise(function(resolve)
+      return Async.create_promise(function(resolve)
         resolve()
       end)
     end
