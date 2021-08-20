@@ -43,7 +43,7 @@ function Mission:new(base_area_id, new_area_id, players)
 
   local object_ids = Net.list_objects(mission.area_id)
 
-  for i, object_id in ipairs(object_ids) do
+  for _, object_id in ipairs(object_ids) do
     local object = Net.get_object_by_id(mission.area_id, object_id)
 
     if object.name == "Boss" then
@@ -51,8 +51,13 @@ function Mission:new(base_area_id, new_area_id, players)
       table.insert(mission.enemies, 1, object) -- make the boss the first enemy in the list
     elseif object.name == "Enemy" then
       mission.enemies[#mission.enemies + 1] = object
+      -- delete to reduce map size
+      Net.remove_object(mission.area_id, object_id)
     elseif object.name == "Point of Interest" then
+      -- track points of interest for the camera
       mission.points_of_interest[#mission.points_of_interest + 1] = object
+      -- delete to reduce map size
+      Net.remove_object(mission.area_id, object_id)
     elseif is_panel(mission, object) then
       if object.data.gid == mission.ITEM_PANEL_GID then
         -- set the loot for the panel
