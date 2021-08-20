@@ -68,6 +68,14 @@ function PlayerSession:get_ability_permission()
     end
 
     -- Yes
+
+    if self.instance.order_points < self.ability.cost then
+      -- not enough order points
+      self:message("Not enough Order Pts!")
+      return
+    end
+
+    self.instance.order_points = self.instance.order_points - self.ability.cost
     self.ability.activate(self.instance, self)
   end)
 end
