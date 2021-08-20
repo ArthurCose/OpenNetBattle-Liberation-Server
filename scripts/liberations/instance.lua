@@ -334,16 +334,8 @@ function liberate_panel(instance, player_session)
 
       -- todo: battle
 
-      instance:remove_panel(panel)
-      player_session.panel_selection:clear()
-
-      Async.await(player_session:message_with_mug("Yeah!\nI liberated it!"))
-
-      if panel.loot then
-        -- loot the panel if it has loot
-        Async.await(Loot.loot_item_panel(instance, player_session, panel))
-      end
-
+      local panels = player_session.panel_selection:get_selection()
+      Async.await(player_session:liberate_and_loot_panels(panels))
       player_session:complete_turn()
     end
   end)

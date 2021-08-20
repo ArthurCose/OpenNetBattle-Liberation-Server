@@ -1,5 +1,6 @@
 local Ability = require("scripts/liberations/ability")
 local PanelSelection = require("scripts/liberations/panel_selection")
+local Loot = require("scripts/liberations/loot")
 
 local PlayerSession = {}
 
@@ -111,6 +112,39 @@ function PlayerSession:pass_turn()
   self:heal(self.max_health / 2)
 
   self:complete_turn()
+end
+
+function PlayerSession:liberate_panels(panels)
+  for _, panel in ipairs(panels) do
+    self.instance:remove_panel(panel)
+  end
+
+  self.panel_selection:clear()
+
+  return self:message_with_mug("Yeah!\nI liberated it!")
+end
+
+-- returns a promise that resolves after looting
+function PlayerSession:loot_panels(panels)
+  local co = coroutine.create(function()
+    for _, panel in ipairs(panels) do
+      if panel.loot then
+        -- loot the panel if it has loot
+        Async.await(Loot.loot_item_panel(self.instance, self, panel))
+      end
+    end
+  end)
+
+  return Async.promisify(co)
+end
+
+
+function PlayerSession:liberate_and_loot_panels(panels)
+  return Async.create_promise(function(resolve)
+    self:liberate_panels(panels).and_then(function()
+      self:loot_panels(panels).and_then(resolve)
+    end)
+  end)
 end
 
 function PlayerSession:complete_turn()

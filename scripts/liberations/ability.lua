@@ -1,13 +1,5 @@
 -- todo: pass terrain to activate()? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
 
-function liberate_selection(instance, player_session)
-  for _, panel in ipairs(player_session.panel_selection:get_panels()) do
-    instance:remove_panel(panel)
-  end
-
-  player_session.panel_selection:clear()
-end
-
 local Ability = {
   Guard = {}, -- passive, knightman's ability
   LongSwrd = {
@@ -20,9 +12,12 @@ local Ability = {
     },
     activate = function (instance, player_session)
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
-      player_session:message_with_mug("Yeah!\nI liberated it!")
-      liberate_selection(instance, player_session)
-      player_session:complete_turn()
+
+      local panels = player_session.panel_selection:get_panels()
+
+      player_session:liberate_and_loot_panels(panels).and_then(function()
+        player_session:complete_turn()
+      end)
     end
   },
   ScrenDiv = {
@@ -34,9 +29,12 @@ local Ability = {
     },
     activate = function (instance, player_session)
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
-      player_session:message_with_mug("Yeah!\nI liberated it!")
-      liberate_selection(instance, player_session)
-      player_session:complete_turn()
+
+      local panels = player_session.panel_selection:get_panels()
+
+      player_session:liberate_and_loot_panels(panels).and_then(function()
+        player_session:complete_turn()
+      end)
     end
   },
   PanelSearch = {
