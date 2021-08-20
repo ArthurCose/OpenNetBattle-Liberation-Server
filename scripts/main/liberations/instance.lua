@@ -1,11 +1,11 @@
 local PlayerSession = require("scripts/main/liberations/player_session")
 local Loot = require("scripts/main/liberations/loot")
 
-local debug = true
+local debug = false
 
 local Mission = {}
 
-function Mission:new(base_area_id, new_area_id, player_ids)
+function Mission:new(base_area_id, new_area_id, players)
   local FIRST_PANEL_GID = Net.get_tileset(base_area_id, "/server/assets/tiles/panels.tsx").first_gid
   local TOTAL_PANEL_GIDS = 7
 
@@ -14,7 +14,7 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     boss = nil,
     enemies = {},
     points_of_interest = {},
-    player_list = player_ids,
+    player_list = players,
     ready_count = 0,
     player_sessions = {},
     order_points = 3,
@@ -80,29 +80,29 @@ function Mission:begin()
   local slide_time = .7
   local total_camera_time = 0
 
-  for i, player_id in ipairs(self.player_list) do
+  for _, player in ipairs(self.player_list) do
     -- create data
-    self.player_sessions[player_id] = PlayerSession:new(self, player_id)
+    self.player_sessions[player.id] = PlayerSession:new(self, player)
 
     if not debug then
-      Net.lock_player_input(player_id)
+      Net.lock_player_input(player.id)
 
       -- reset - we want the total camera time taken by all players in parallel, not in sequence
       total_camera_time = 0
 
       -- control camera
-      Net.move_player_camera(player_id, spawn.x, spawn.y, spawn.z, hold_time)
+      Net.move_player_camera(player.id, spawn.x, spawn.y, spawn.z, hold_time)
       total_camera_time = total_camera_time + hold_time
 
       for j, point in ipairs(self.points_of_interest) do
-        Net.slide_player_camera(player_id, point.x, point.y, point.z, slide_time)
-        Net.move_player_camera(player_id, point.x, point.y, point.z, hold_time)
+        Net.slide_player_camera(player.id, point.x, point.y, point.z, slide_time)
+        Net.move_player_camera(player.id, point.x, point.y, point.z, hold_time)
 
         total_camera_time = total_camera_time + slide_time + hold_time
       end
 
-      Net.slide_player_camera(player_id, spawn.x, spawn.y, spawn.z, slide_time)
-      Net.unlock_player_camera(player_id)
+      Net.slide_player_camera(player.id, spawn.x, spawn.y, spawn.z, slide_time)
+      Net.unlock_player_camera(player.id)
 
       total_camera_time = total_camera_time + slide_time
     end
@@ -111,8 +111,8 @@ function Mission:begin()
   if not debug then
     -- release players after camera animation
     Async.sleep(total_camera_time).and_then(function()
-      for i, player_id in ipairs(self.player_list) do
-        Net.unlock_player_input(player_id)
+      for _, player in ipairs(self.player_list) do
+        Net.unlock_player_input(player.id)
       end
     end)
   end
@@ -165,7 +165,7 @@ function Mission:handle_object_interaction(player_id, object_id)
 
   if not can_liberate then
     -- indestructible panels
-    local quiz_promise = player_session:quiz("Pass", "Cancel")
+    local quiz_promise = player_session.player:quiz("Pass", "Cancel")
 
     quiz_promise.and_then(function(response)
         if response == 0 then
@@ -194,7 +194,7 @@ function Mission:handle_object_interaction(player_id, object_id)
   if not can_use_ability then
     player_session.panel_selection:select_panel(panel)
 
-    local quiz_promise = player_session:quiz(
+    local quiz_promise = player_session.player:quiz(
       "Liberation",
       "Pass",
       "Cancel"
@@ -222,7 +222,7 @@ function Mission:handle_object_interaction(player_id, object_id)
   if panel.data.gid == self.BASIC_PANEL_GID or panel.data.gid == self.ITEM_PANEL_GID then
     player_session.panel_selection:select_panel(panel)
 
-    local quiz_promise = player_session:quiz(
+    local quiz_promise = player_session.player:quiz(
       "Liberation",
       ability.name,
       "Pass"
@@ -250,18 +250,12 @@ function Mission:handle_object_interaction(player_id, object_id)
 
 end
 
-function Mission:handle_textbox_response(player_id, response)
-  local player_session = self.player_sessions[player_id]
-
-  player_session:handle_textbox_response(response)
-end
-
 function Mission:handle_player_transfer(player_id)
 end
 
-function Mission:handle_player_disconnect(player_id, response)
-  for i, stored_player_id in ipairs(self.player_list) do
-    if player_id == stored_player_id then
+function Mission:handle_player_disconnect(player_id)
+  for i, player in ipairs(self.player_list) do
+    if player_id == player.id then
       table.remove(self.player_list, i)
       break
     end
@@ -269,16 +263,6 @@ function Mission:handle_player_disconnect(player_id, response)
 
   self.player_sessions[player_id]:handle_disconnect()
   self.player_sessions[player_id] = nil
-end
-
-function Mission:has_player(player_id)
-  for i, stored_player_id in ipairs(self.player_list) do
-    if player_id == stored_player_id then
-      return true
-    end
-  end
-
-  return false
 end
 
 function Mission:list_players()
@@ -337,16 +321,16 @@ function liberate_panel(instance, player_session)
 
   local co = coroutine.create(function()
     if panel.data.gid == instance.BONUS_PANEL_GID then
-      Async.await(player_session:message_with_mug("A BonusPanel!"))
+      Async.await(player_session.player:message_with_mug("A BonusPanel!"))
 
       instance:remove_panel(panel)
       panel_selection:clear()
 
       Async.await(Loot.loot_bonus_panel(instance, player_session, panel))
 
-      Net.unlock_player_input(player_session.player_id)
+      Net.unlock_player_input(player_session.player.id)
     elseif panel.data.gid == instance.DARK_HOLE_PANEL_GID then
-      Async.await(player_session:message_with_mug("Let's do it! Liberate panels!"))
+      Async.await(player_session.player:message_with_mug("Let's do it! Liberate panels!"))
 
       -- todo: battle
 
@@ -368,7 +352,7 @@ function liberate_panel(instance, player_session)
 
       player_session:complete_turn()
     else
-      Async.await(player_session:message_with_mug("Let's do it! Liberate panels!"))
+      Async.await(player_session.player:message_with_mug("Let's do it! Liberate panels!"))
 
       -- todo: battle
 
@@ -388,19 +372,21 @@ function convert_indestructible_panels(instance)
 
   -- notify players
   for _, player_session in pairs(instance.player_sessions) do
-    player_session:message("No more DarkHoles! Nothing will save the Darkloids now!")
+    player_session.player:message("No more DarkHoles! Nothing will save the Darkloids now!")
 
-    Net.lock_player_input(player_session.player_id)
+    local player_id = player_session.player.id
 
-    Net.slide_player_camera(player_session.player_id, instance.boss.x, instance.boss.y, instance.boss.z, slide_time)
+    Net.lock_player_input(player_id)
+
+    Net.slide_player_camera(player_id, instance.boss.x, instance.boss.y, instance.boss.z, slide_time)
 
     -- hold the camera
-    Net.move_player_camera(player_session.player_id, instance.boss.x, instance.boss.y, instance.boss.z, hold_time)
+    Net.move_player_camera(player_id, instance.boss.x, instance.boss.y, instance.boss.z, hold_time)
 
     -- return the camera
-    local player_pos = Net.get_player_position(player_session.player_id)
-    Net.slide_player_camera(player_session.player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
-    Net.unlock_player_camera(player_session.player_id)
+    local player_pos = Net.get_player_position(player_id)
+    Net.slide_player_camera(player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
+    Net.unlock_player_camera(player_id)
   end
 
   Async.await(Async.sleep(slide_time + hold_time / 2))
@@ -418,7 +404,7 @@ function convert_indestructible_panels(instance)
   -- returning control
   for _, player_session in pairs(instance.player_sessions) do
     if not player_session.completed_turn then
-      Net.unlock_player_input(player_session.player_id)
+      Net.unlock_player_input(player_session.player.id)
     end
   end
 end
@@ -428,9 +414,9 @@ function take_enemy_turn(instance)
   local slide_time = .5
 
   local co = coroutine.create(function()
-    for i, enemy in ipairs(instance.enemies) do
-      for j, player_id in ipairs(instance.player_list) do
-        Net.slide_player_camera(player_id, enemy.x, enemy.y, enemy.z, slide_time)
+    for _, enemy in ipairs(instance.enemies) do
+      for _, player in ipairs(instance.player_list) do
+        Net.slide_player_camera(player.id, enemy.x, enemy.y, enemy.z, slide_time)
       end
 
       -- wait until the camera is done moving
@@ -443,10 +429,10 @@ function take_enemy_turn(instance)
     end
 
     -- completed turn, return camera to players
-    for i, player_session in pairs(instance.player_sessions) do
-      local player_pos = Net.get_player_position(player_session.player_id)
-      Net.slide_player_camera(player_session.player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
-      Net.unlock_player_camera(player_session.player_id)
+    for i, player in pairs(instance.player_list) do
+      local player_pos = Net.get_player_position(player.id)
+      Net.slide_player_camera(player.id, player_pos.x, player_pos.y, player_pos.z, slide_time)
+      Net.unlock_player_camera(player.id)
     end
 
     -- wait for the camera
