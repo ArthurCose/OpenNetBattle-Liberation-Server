@@ -20,10 +20,13 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     order_points = 3,
     MAX_ORDER_POINTS = 8,
     panels = {},
+    dark_hole_count = 0,
+    indestructible_panels = {},
     FIRST_PANEL_GID = FIRST_PANEL_GID,
     BASIC_PANEL_GID = FIRST_PANEL_GID,
     ITEM_PANEL_GID = FIRST_PANEL_GID + 1,
     DARK_HOLE_PANEL_GID = FIRST_PANEL_GID + 2,
+    INDESTRUCTIBLE_PANEL_GID = FIRST_PANEL_GID + 3,
     BONUS_PANEL_GID = FIRST_PANEL_GID + 4,
     LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1
   }
@@ -54,6 +57,12 @@ function Mission:new(base_area_id, new_area_id, player_ids)
       if object.data.gid == mission.ITEM_PANEL_GID then
         -- set the loot for the panel
         object.loot = Loot.DEFAULT_POOL[math.random(#Loot.DEFAULT_POOL)]
+      elseif object.data.gid == mission.DARK_HOLE_PANEL_GID then
+        -- track dark holes for converting indestructible panels
+        mission.dark_hole_count = mission.dark_hole_count + 1
+      elseif object.data.gid == mission.INDESTRUCTIBLE_PANEL_GID then
+        -- track indestructible panels for conversion
+        mission.indestructible_panels[#mission.indestructible_panels+1] = object
       end
 
       local x = math.floor(object.x) + 1
@@ -315,32 +324,103 @@ function is_panel(instance, object)
   return object.data.type == "tile" and object.data.gid >= instance.FIRST_PANEL_GID and object.data.gid <= instance.LAST_PANEL_GID
 end
 
+local DARK_HOLE_SHAPE = {
+  {1, 1, 1},
+  {1, 1, 1},
+  {1, 1, 1},
+}
+
 -- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
 function liberate_panel(instance, player_session)
-  local panel = player_session.panel_selection.root_panel
+  local panel_selection = player_session.panel_selection
+  local panel = panel_selection.root_panel
 
   local co = coroutine.create(function()
     if panel.data.gid == instance.BONUS_PANEL_GID then
       Async.await(player_session:message_with_mug("A BonusPanel!"))
 
       instance:remove_panel(panel)
-      player_session.panel_selection:clear()
+      panel_selection:clear()
 
       Async.await(Loot.loot_bonus_panel(instance, player_session, panel))
 
       Net.unlock_player_input(player_session.player_id)
+    elseif panel.data.gid == instance.DARK_HOLE_PANEL_GID then
+      Async.await(player_session:message_with_mug("Let's do it! Liberate panels!"))
+
+      -- todo: battle
+
+      panel_selection:set_shape(DARK_HOLE_SHAPE, 0, -1)
+      local panels = panel_selection:get_panels()
+
+      Async.await(player_session:liberate_panels(panels))
+
+      -- todo: delete spawned monster
+
+      instance.dark_hole_count = instance.dark_hole_count - 1
+
+      if instance.dark_hole_count == 0 then
+        convert_indestructible_panels(instance)
+      end
+
+      -- looting occurs last
+      Async.await(player_session:loot_panels(panels))
+
+      player_session:complete_turn()
     else
       Async.await(player_session:message_with_mug("Let's do it! Liberate panels!"))
 
       -- todo: battle
 
-      local panels = player_session.panel_selection:get_selection()
+      local panels = player_session.panel_selection:get_panels()
       Async.await(player_session:liberate_and_loot_panels(panels))
       player_session:complete_turn()
     end
   end)
 
   Async.promisify(co)
+end
+
+-- expects execution in a coroutine
+function convert_indestructible_panels(instance)
+  local slide_time = .5
+  local hold_time = 2
+
+  -- notify players
+  for _, player_session in pairs(instance.player_sessions) do
+    player_session:message("No more DarkHoles! Nothing will save the Darkloids now!")
+
+    Net.lock_player_input(player_session.player_id)
+
+    Net.slide_player_camera(player_session.player_id, instance.boss.x, instance.boss.y, instance.boss.z, slide_time)
+
+    -- hold the camera
+    Net.move_player_camera(player_session.player_id, instance.boss.x, instance.boss.y, instance.boss.z, hold_time)
+
+    -- return the camera
+    local player_pos = Net.get_player_position(player_session.player_id)
+    Net.slide_player_camera(player_session.player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
+    Net.unlock_player_camera(player_session.player_id)
+  end
+
+  Async.await(Async.sleep(slide_time + hold_time / 2))
+
+  -- convert panels
+  for _, panel in ipairs(instance.indestructible_panels) do
+    panel.data.gid = instance.BASIC_PANEL_GID
+    Net.set_object_data(instance.area_id, panel.id, panel.data)
+  end
+
+  instance.indestructible_panels = nil
+
+  Async.await(Async.sleep(hold_time / 2 + slide_time))
+
+  -- returning control
+  for _, player_session in pairs(instance.player_sessions) do
+    if not player_session.completed_turn then
+      Net.unlock_player_input(player_session.player_id)
+    end
+  end
 end
 
 function take_enemy_turn(instance)

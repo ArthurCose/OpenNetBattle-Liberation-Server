@@ -40,7 +40,10 @@ function PanelSelection:select_panel(panel_object)
 end
 
 -- shape = [m][n] bool array, n being odd, bottom center is player position
-function PanelSelection:set_shape(shape)
+function PanelSelection:set_shape(shape, shape_offset_x, shape_offset_y)
+  shape_offset_x = shape_offset_x or 0
+  shape_offset_y = shape_offset_y or 0
+
   local root_panel = self.root_panel
 
   -- delete old objects
@@ -52,7 +55,7 @@ function PanelSelection:set_shape(shape)
 
   -- generating objects
   for m, row in ipairs(shape) do
-    local center = (#row - 1) / 2
+    local center_x = (#row - 1) / 2
 
     for n, is_selected in ipairs(row) do
       if not is_selected then
@@ -60,8 +63,8 @@ function PanelSelection:set_shape(shape)
       end
 
       -- facing up right by default
-      local offset_x = n - center - 1
-      local offset_y = -(m - 1)
+      local offset_x = n + shape_offset_x - center_x - 1
+      local offset_y = -(m + shape_offset_y - 1)
 
       -- adjusting the offset to the direction
       if self.selection_direction == Direction.DOWN_LEFT then
@@ -83,7 +86,7 @@ function PanelSelection:set_shape(shape)
       object.y = object.y + offset_y
 
       local panel = self.instance:get_panel_at(object.x, object.y)
-      if not can_shape_select(self.instance, panel) then
+      if panel ~= root_panel and not can_shape_select(self.instance, panel) then
         goto continue
       end
 
