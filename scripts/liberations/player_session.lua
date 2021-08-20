@@ -12,6 +12,7 @@ function PlayerSession:new(instance, player_id)
     completed_turn = false,
     panel_selection = PanelSelection:new(instance, player_id),
     ability = Ability.LongSwrd, -- todo: resolve from element/name
+    mug = Net.get_player_mugshot(player_id),
     on_response = nil
   }
 
@@ -24,10 +25,18 @@ function PlayerSession:new(instance, player_id)
   return player_session
 end
 
+function PlayerSession:message_with_mug(message)
+  Net.message_player(self.player_id, message, self.mug.texture_path, self.mug.animation_path)
+end
+
+function PlayerSession:heal(amount)
+  self.health = math.min(math.ceil(self.health + amount), self.max_health)
+  Net.set_player_health(self.player_id, self.health)
+end
+
 function PlayerSession:pass_turn()
   -- heal up to 50% of health
-  self.health = math.min(self.health + self.max_health / 2, self.max_health)
-  Net.set_player_health(self.player_id, self.health)
+  self:heal(self.max_health / 2)
 
   self:complete_turn()
 end

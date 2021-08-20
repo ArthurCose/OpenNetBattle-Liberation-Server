@@ -95,20 +95,14 @@ function PanelSelection:set_shape(shape)
   end
 end
 
-function PanelSelection:liberate()
-  -- todo: add a callback to decide whether to liberate/take item
-  -- some navis only take items, such as numberman
-  -- some navis only liberate panels (destroying items) - napalmman
+function PanelSelection:get_panels()
+  local panels = {}
 
   for _, object in pairs(self.objects) do
-    local panel_object = self.instance:get_panel_at(object.x, object.y)
-
-    -- todo: loot/call callback here?
-
-    Net.remove_object(self.instance.area_id, panel_object.id)
+    panels[#panels+1] = self.instance:get_panel_at(object.x, object.y)
   end
 
-  self:clear()
+  return panels
 end
 
 function PanelSelection:clear()

@@ -1,4 +1,5 @@
 local PlayerSession = require("scripts/liberations/player_session")
+local Loot = require("scripts/liberations/loot")
 
 local debug = true
 
@@ -50,6 +51,11 @@ function Mission:new(base_area_id, new_area_id, player_ids)
     elseif object.name == "Point of Interest" then
       mission.points_of_interest[#mission.points_of_interest + 1] = object
     elseif is_panel(mission, object) then
+      if object.data.gid == mission.ITEM_PANEL_GID then
+        -- set the loot for the panel
+        object.loot = Loot.DEFAULT_POOL[math.random(#Loot.DEFAULT_POOL)]
+      end
+
       local x = math.floor(object.x) + 1
       local y = math.floor(object.y) + 1
       mission.panels[y][x] = object
@@ -126,19 +132,26 @@ function Mission:handle_object_interaction(player_id, object_id)
   -- panel selection detection
 
   local object = Net.get_object_by_id(self.area_id, object_id)
+  
+  if not object then
+    -- must have been liberated
+    return
+  end
 
-  if not is_panel(self, object) then
-    -- out of range
+  local panel = self:get_panel_at(object.x, object.y)
+
+  if not panel then
+    -- no data associated with this object
     return
   end
 
   Net.lock_player_input(player_id)
 
   local can_liberate = (
-    object.data.gid == self.BASIC_PANEL_GID or
-    object.data.gid == self.ITEM_PANEL_GID or
-    object.data.gid == self.DARK_HOLE_PANEL_GID or
-    object.data.gid == self.BONUS_PANEL_GID
+    panel.data.gid == self.BASIC_PANEL_GID or
+    panel.data.gid == self.ITEM_PANEL_GID or
+    panel.data.gid == self.DARK_HOLE_PANEL_GID or
+    panel.data.gid == self.BONUS_PANEL_GID
   )
 
   if not can_liberate then
@@ -168,13 +181,13 @@ function Mission:handle_object_interaction(player_id, object_id)
     ability.question and -- no question = passive ability
     self.order_points > ability.cost and
     (
-      object.data.gid == self.BASIC_PANEL_GID or
-      object.data.gid == self.ITEM_PANEL_GID
+      panel.data.gid == self.BASIC_PANEL_GID or
+      panel.data.gid == self.ITEM_PANEL_GID
     )
   )
 
   if not can_use_ability then
-    player_session.panel_selection:select_panel(object)
+    player_session.panel_selection:select_panel(panel)
 
     Net.quiz_player(
       player_id,
@@ -201,8 +214,8 @@ function Mission:handle_object_interaction(player_id, object_id)
   end
 
 
-  if object.data.gid == self.BASIC_PANEL_GID or object.data.gid == self.ITEM_PANEL_GID then
-    player_session.panel_selection:select_panel(object)
+  if panel.data.gid == self.BASIC_PANEL_GID or panel.data.gid == self.ITEM_PANEL_GID then
+    player_session.panel_selection:select_panel(panel)
 
     Net.quiz_player(
       player_id,
@@ -310,6 +323,23 @@ function Mission:get_panel_at(x, y)
   return row[x]
 end
 
+function Mission:remove_panel(panel)
+  local y = math.floor(panel.y) + 1
+  local row = self.panels[y]
+
+  if row == nil then
+    return nil
+  end
+
+  local x = math.floor(panel.x) + 1
+
+  if row[x] ~= nil then
+    Net.remove_object(self.area_id, panel.id)
+    row[x] = nil
+  end
+end
+
+
 -- private functions
 function is_panel(instance, object)
   return object.data.type == "tile" and object.data.gid >= instance.FIRST_PANEL_GID and object.data.gid <= instance.LAST_PANEL_GID
@@ -319,14 +349,33 @@ end
 function liberate_panel(instance, player_session)
   local panel = player_session.panel_selection.root_panel
 
-  player_session.panel_selection:liberate()
-
   if panel.data.gid == instance.BONUS_PANEL_GID then
-    -- todo: give item
-    Net.unlock_player_input(player_session.player_id)
+    player_session:message_with_mug("A BonusPanel!")
+
+    player_session.on_response = function()
+      instance:remove_panel(panel)
+      player_session.panel_selection:clear()
+      -- todo: give item
+      Net.unlock_player_input(player_session.player_id)
+    end
   else
-    -- todo: battle
-    player_session:complete_turn()
+    player_session:message_with_mug("Let's do it! Liberate panels!")
+
+    player_session.on_response = function()
+      -- todo: battle
+      instance:remove_panel(panel)
+      player_session.panel_selection:clear()
+      player_session:message_with_mug("Yeah!\nI liberated it!")
+      player_session.on_response = function()
+        if panel.loot then
+          Loot.loot_item_panel(instance, player_session, panel).and_then(function()
+            player_session:complete_turn()
+          end)
+        else
+          player_session:complete_turn()
+        end
+      end
+    end
   end
 end
 

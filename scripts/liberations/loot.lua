@@ -3,14 +3,92 @@ local ID_PREFIX = "LIB_ITEM"
 local SHADOW_ID_PREFIX = "LIB_SHADOW"
 
 local Loot = {
-  HEART = "HEART",
-  CHIP = "CHIP",
-  ZENNY = "ZENNY",
-  BUGFRAG = "BUGFRAG",
-  ORDER_POINT = "ORDER_POINT",
-  INVINCIBILITY = "INVINCIBILITY",
-  MAJOR_HIT = "MAJOR_HIT",
-  KEY = "KEY",
+  HEART = {
+    animation = "HEART",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found\na heart!")
+        player_session:heal(player_session.max_health / 2)
+        resolve()
+      end)
+    end
+  },
+  CHIP = {
+    animation = "CHIP",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found a\nBattleChip!")
+        resolve()
+      end)
+    end
+  },
+  ZENNY = {
+    animation = "ZENNY",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found some\nMonies!")
+        resolve()
+      end)
+    end
+  },
+  BUGFRAG = {
+    animation = "BUGFRAG",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found a\nBugFrag!")
+        resolve()
+      end)
+    end
+  },
+  ORDER_POINT = {
+    animation = "ORDER_POINT",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        player_session:message_with_mug("I found\nOrder Points!")
+
+        local previous_points = instance.order_points
+        instance.order_points = math.min(instance.order_points + 3, instance.MAX_ORDER_POINTS)
+
+        local recovered_points = instance.order_points - previous_points
+        Net.message_player(player_session.player_id, recovered_points .. "\nOrder Pts Recovered!")
+        resolve()
+      end)
+    end
+  },
+  INVINCIBILITY = {
+    animation = "INVINCIBILITY",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        Net.message_player(player_session.player_id, "Team becomes invincible for\n 1 phase!!")
+        resolve()
+      end)
+    end
+  },
+  MAJOR_HIT = {
+    animation = "MAJOR_HIT",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        Net.message_player(player_session.player_id, "Damages the closest enemy the most!")
+        resolve()
+      end)
+    end
+  },
+  KEY = {
+    animation = "KEY",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        resolve()
+      end)
+    end
+  },
+  TRAP = {
+    animation = "TRAP",
+    activate = function(instance, player_session)
+      Async.create_promise(function(resolve)
+        resolve()
+      end)
+    end
+  },
 }
 
 Loot.DEFAULT_POOL = {
@@ -24,8 +102,6 @@ Loot.DEFAULT_POOL = {
 Loot.BONUS_POOL = {
   Loot.HEART,
   -- Loot.CHIP,
-  -- Loot.ZENNY,
-  -- Loot.BUGFRAG,
   Loot.ORDER_POINT,
   -- Loot.INVINCIBILITY,
   -- Loot.MAJOR_HIT,
@@ -41,13 +117,14 @@ Loot.TEST_POOL = {
 
 local RISE_DURATION = .1
 
--- returns a function that cleans up the bot
-function Loot.spawn_item_bot(item_name, area_id, x, y, z)
+-- returns a promise that resolves when the animation finishes
+-- resolved value is a function that cleans up the bot
+function Loot.spawn_item_bot(item, area_id, x, y, z)
   local bot_data = {
     area_id = area_id,
     texture_path = "/server/assets/bots/item.png",
     animation_path = "/server/assets/bots/item.animation",
-    animation = item_name,
+    animation = item.animation,
     warp_in = false,
     x = x,
     y = y,
@@ -63,7 +140,14 @@ function Loot.spawn_item_bot(item_name, area_id, x, y, z)
     },
   }
 
-  return spawn_item_bot(bot_data, property_animation)
+  -- return a promise that resolves when the animation finishes
+  return Async.create_promise(function(resolve)
+    local cleanup = spawn_item_bot(bot_data, property_animation)
+
+    Async.sleep(RISE_DURATION).and_then(function()
+      resolve(cleanup)
+    end)
+  end)
 end
 
 -- returns a promise that resolves when the animation finishes
@@ -79,7 +163,7 @@ function Loot.spawn_randomized_item_bot(loot_pool, item_index, area_id, x, y, z)
     area_id = area_id,
     texture_path = "/server/assets/bots/item.png",
     animation_path = "/server/assets/bots/item.animation",
-    animation = loot_pool[start_index],
+    animation = loot_pool[start_index].animation,
     warp_in = false,
     x = x,
     y = y,
@@ -96,7 +180,7 @@ function Loot.spawn_randomized_item_bot(loot_pool, item_index, area_id, x, y, z)
 
     local key_frame = {
       properties = {
-        { property = "Animation", value = loot_pool[current_item_index] }
+        { property = "Animation", value = loot_pool[current_item_index].animation }
       },
       duration = frame_duration
     }
@@ -120,6 +204,35 @@ function Loot.spawn_randomized_item_bot(loot_pool, item_index, area_id, x, y, z)
       resolve(cleanup)
     end)
   end)
+end
+
+-- returns a promise, resolves when looting is completed
+function Loot.loot_item_panel(instance, player_session, panel)
+  local slide_time = .1
+
+  Net.slide_player_camera(
+    player_session.player_id,
+    math.min(panel.x) + .5,
+    math.min(panel.y) + .5,
+    panel.z,
+    slide_time
+  )
+
+  local co = coroutine.create(function()
+    Async.await(Async.sleep(slide_time))
+
+    local spawn_x = math.floor(panel.x) + .5
+    local spawn_y = math.floor(panel.y) + .5
+    local spawn_z = panel.z
+
+    local remove_item_bot = Async.await(Loot.spawn_item_bot(panel.loot, instance.area_id, spawn_x, spawn_y, spawn_z))
+
+    Async.await(panel.loot.activate(instance, player_session))
+
+    remove_item_bot()
+  end)
+
+  return Async.promisify(co)
 end
 
 -- private functions
