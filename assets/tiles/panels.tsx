@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.4" tiledversion="1.4.3" name="panels" tilewidth="50" tileheight="30" tilecount="70" columns="7" objectalignment="top">
+<tileset version="1.5" tiledversion="1.7.1" name="panels" tilewidth="50" tileheight="30" tilecount="70" columns="7" objectalignment="top">
+ <tileoffset x="0" y="1"/>
  <image source="panels.png" width="350" height="300"/>
  <tile id="0">
   <objectgroup draworder="index" id="3">
