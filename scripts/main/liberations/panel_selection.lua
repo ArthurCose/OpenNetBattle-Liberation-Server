@@ -2,7 +2,7 @@ local Direction = require("scripts/libs/direction")
 
 local PanelSelection = {}
 
-local PANEL_OFFSET = 1 / 32
+local SELECTION_OFFSET = 1 / 32
 
 function PanelSelection:new(instance, player_id)
   local LIBERATING_PANEL_GID = Net.get_tileset(instance.area_id, "/server/assets/tiles/selected tile.tsx").first_gid
@@ -152,8 +152,8 @@ end
 
 function generate_selection_object(panel_selection)
   return {
-    x = panel_selection.root_panel.x + PANEL_OFFSET,
-    y = panel_selection.root_panel.y + PANEL_OFFSET,
+    x = panel_selection.root_panel.x + SELECTION_OFFSET,
+    y = panel_selection.root_panel.y + SELECTION_OFFSET,
     z = panel_selection.root_panel.z,
     width = 2,
     height = 1,
