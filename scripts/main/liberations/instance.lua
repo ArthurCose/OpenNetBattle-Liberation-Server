@@ -131,12 +131,16 @@ function Mission:tick(elapsed)
   end
 end
 
-function Mission:handle_tile_interaction(player_id, x, y, z)
-  if self.player_sessions[player_id].completed_turn then return end
+function Mission:handle_tile_interaction(player_id, x, y, z, button)
 end
 
-function Mission:handle_object_interaction(player_id, object_id)
+function Mission:handle_object_interaction(player_id, object_id, button)
   local player_session = self.player_sessions[player_id]
+
+  if button == 1 then
+    -- Shoulder L
+    return
+  end
 
   if player_session.completed_turn or Net.is_player_in_widget(player_id) then
     -- ignore selection as it's not our turn or waiting for a response
@@ -146,7 +150,7 @@ function Mission:handle_object_interaction(player_id, object_id)
   -- panel selection detection
 
   local object = Net.get_object_by_id(self.area_id, object_id)
-  
+
   if not object then
     -- must have been liberated
     return
@@ -224,35 +228,30 @@ function Mission:handle_object_interaction(player_id, object_id)
   end
 
 
-  if panel.data.gid == self.BASIC_PANEL_GID or panel.data.gid == self.ITEM_PANEL_GID then
-    player_session.panel_selection:select_panel(panel)
+  player_session.panel_selection:select_panel(panel)
 
-    local quiz_promise = player_session.player:quiz(
-      "Liberation",
-      ability.name,
-      "Pass"
-    )
+  local quiz_promise = player_session.player:quiz(
+    "Liberation",
+    ability.name,
+    "Pass"
+  )
 
-    quiz_promise.and_then(function(response)
-      if response == 0 then
-        -- Liberate
-        liberate_panel(self, player_session)
-      elseif response == 1 then
-        -- Ability
-        player_session.panel_selection:set_shape(ability.shape)
+  quiz_promise.and_then(function(response)
+    if response == 0 then
+      -- Liberate
+      liberate_panel(self, player_session)
+    elseif response == 1 then
+      -- Ability
+      player_session.panel_selection:set_shape(ability.shape)
 
-        -- ask if we should use the ability
-        player_session:get_ability_permission()
-      elseif response == 2 then
-        -- Pass
-        player_session.panel_selection:clear()
-        player_session:get_pass_turn_permission()
-      end
-    end)
-
-    return
-  end
-
+      -- ask if we should use the ability
+      player_session:get_ability_permission()
+    elseif response == 2 then
+      -- Pass
+      player_session.panel_selection:clear()
+      player_session:get_pass_turn_permission()
+    end
+  end)
 end
 
 function Mission:handle_player_transfer(player_id)

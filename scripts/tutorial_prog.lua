@@ -48,7 +48,8 @@ function list_options(player_id)
   quiz_player(player_id, "Liberations", "Parties", "Nothing")
 end
 
-function handle_actor_interaction(player_id, other_id)
+function handle_actor_interaction(player_id, other_id, button)
+  if button ~= 0 then return end
   if other_id ~= id then return end
   if player_states[player_id] ~= nil then return end
 
@@ -102,7 +103,7 @@ local response_handlers = {
       return nil
     end
   end,
-    
+
   ["liberations"] = "start",
 
   -- parties

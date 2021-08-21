@@ -28,10 +28,10 @@ function tick(elapsed)
   end
 end
 
-function handle_tile_interaction(player_id, x, y, z)
+function handle_tile_interaction(player_id, x, y, z, button)
   local area_id = Net.get_player_area(player_id)
 
-  if area_id == waiting_area then
+  if area_id == waiting_area and button == 0 then
     local player = players[player_id]
 
     player:quiz("Leave party", "Close").and_then(function(response)
@@ -40,24 +40,24 @@ function handle_tile_interaction(player_id, x, y, z)
       end
     end)
   elseif instances[area_id] ~= nil then
-    instances[area_id]:handle_tile_interaction(player_id, x, y, z)
+    instances[area_id]:handle_tile_interaction(player_id, x, y, z, button)
   end
 end
 
-function handle_object_interaction(player_id, object_id)
+function handle_object_interaction(player_id, object_id, button)
   local area_id = Net.get_player_area(player_id)
 
   if area_id == waiting_area then
-    detect_door_interaction(player_id, object_id)
+    detect_door_interaction(player_id, object_id, button)
   elseif instances[area_id] ~= nil then
-    instances[area_id]:handle_object_interaction(player_id, object_id)
+    instances[area_id]:handle_object_interaction(player_id, object_id, button)
   end
 end
 
-function handle_actor_interaction(player_id, other_player_id)
+function handle_actor_interaction(player_id, other_player_id, button)
   local area_id = Net.get_player_area(player_id)
 
-  if area_id ~= waiting_area then return end
+  if area_id ~= waiting_area or button ~= 0 then return end
 
   if Net.is_bot(other_player_id) then return end
 
@@ -98,7 +98,8 @@ function handle_actor_interaction(player_id, other_player_id)
   end)
 end
 
-function detect_door_interaction(player_id, object_id)
+function detect_door_interaction(player_id, object_id, button)
+  if button ~= 0 then return end
   if object_id ~= door.id then return end
 
   local player = players[player_id]
