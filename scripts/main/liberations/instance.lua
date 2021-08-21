@@ -308,8 +308,9 @@ end
 
 
 -- private functions
-function is_panel(instance, object)
-  return object.data.type == "tile" and object.data.gid >= instance.FIRST_PANEL_GID and object.data.gid <= instance.LAST_PANEL_GID
+
+function is_panel(self, object)
+  return object.data.type == "tile" and object.data.gid >= self.FIRST_PANEL_GID and object.data.gid <= self.LAST_PANEL_GID
 end
 
 local DARK_HOLE_SHAPE = {
@@ -319,21 +320,21 @@ local DARK_HOLE_SHAPE = {
 }
 
 -- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
-function liberate_panel(instance, player_session)
+function liberate_panel(self, player_session)
   local panel_selection = player_session.panel_selection
   local panel = panel_selection.root_panel
 
   local co = coroutine.create(function()
-    if panel.data.gid == instance.BONUS_PANEL_GID then
+    if panel.data.gid == self.BONUS_PANEL_GID then
       Async.await(player_session.player:message_with_mug("A BonusPanel!"))
 
-      instance:remove_panel(panel)
+      self:remove_panel(panel)
       panel_selection:clear()
 
-      Async.await(Loot.loot_bonus_panel(instance, player_session, panel))
+      Async.await(Loot.loot_bonus_panel(self, player_session, panel))
 
       Net.unlock_player_input(player_session.player.id)
-    elseif panel.data.gid == instance.DARK_HOLE_PANEL_GID then
+    elseif panel.data.gid == self.DARK_HOLE_PANEL_GID then
       Async.await(player_session.player:message_with_mug("Let's do it! Liberate panels!"))
 
       -- todo: battle
@@ -345,10 +346,10 @@ function liberate_panel(instance, player_session)
 
       -- todo: delete spawned monster
 
-      instance.dark_hole_count = instance.dark_hole_count - 1
+      self.dark_hole_count = self.dark_hole_count - 1
 
-      if instance.dark_hole_count == 0 then
-        convert_indestructible_panels(instance)
+      if self.dark_hole_count == 0 then
+        convert_indestructible_panels(self)
       end
 
       -- looting occurs last
@@ -370,22 +371,22 @@ function liberate_panel(instance, player_session)
 end
 
 -- expects execution in a coroutine
-function convert_indestructible_panels(instance)
+function convert_indestructible_panels(self)
   local slide_time = .5
   local hold_time = 2
 
   -- notify players
-  for _, player_session in pairs(instance.player_sessions) do
+  for _, player_session in pairs(self.player_sessions) do
     player_session.player:message("No more DarkHoles! Nothing will save the Darkloids now!")
 
     local player_id = player_session.player.id
 
     Net.lock_player_input(player_id)
 
-    Net.slide_player_camera(player_id, instance.boss.x, instance.boss.y, instance.boss.z, slide_time)
+    Net.slide_player_camera(player_id, self.boss.x, self.boss.y, self.boss.z, slide_time)
 
     -- hold the camera
-    Net.move_player_camera(player_id, instance.boss.x, instance.boss.y, instance.boss.z, hold_time)
+    Net.move_player_camera(player_id, self.boss.x, self.boss.y, self.boss.z, hold_time)
 
     -- return the camera
     local player_pos = Net.get_player_position(player_id)
@@ -396,30 +397,30 @@ function convert_indestructible_panels(instance)
   Async.await(Async.sleep(slide_time + hold_time / 2))
 
   -- convert panels
-  for _, panel in ipairs(instance.indestructible_panels) do
-    panel.data.gid = instance.BASIC_PANEL_GID
-    Net.set_object_data(instance.area_id, panel.id, panel.data)
+  for _, panel in ipairs(self.indestructible_panels) do
+    panel.data.gid = self.BASIC_PANEL_GID
+    Net.set_object_data(self.area_id, panel.id, panel.data)
   end
 
-  instance.indestructible_panels = nil
+  self.indestructible_panels = nil
 
   Async.await(Async.sleep(hold_time / 2 + slide_time))
 
   -- returning control
-  for _, player_session in pairs(instance.player_sessions) do
+  for _, player_session in pairs(self.player_sessions) do
     if not player_session.completed_turn then
       Net.unlock_player_input(player_session.player.id)
     end
   end
 end
 
-function take_enemy_turn(instance)
+function take_enemy_turn(self)
   local hold_time = .15
   local slide_time = .5
 
   local co = coroutine.create(function()
-    for _, enemy in ipairs(instance.enemies) do
-      for _, player in ipairs(instance.player_list) do
+    for _, enemy in ipairs(self.enemies) do
+      for _, player in ipairs(self.player_list) do
         Net.slide_player_camera(player.id, enemy.x, enemy.y, enemy.z, slide_time)
       end
 
@@ -433,7 +434,7 @@ function take_enemy_turn(instance)
     end
 
     -- completed turn, return camera to players
-    for i, player in pairs(instance.player_list) do
+    for i, player in pairs(self.player_list) do
       local player_pos = Net.get_player_position(player.id)
       Net.slide_player_camera(player.id, player_pos.x, player_pos.y, player_pos.z, slide_time)
       Net.unlock_player_camera(player.id)
@@ -443,7 +444,7 @@ function take_enemy_turn(instance)
     Async.await(Async.sleep(slide_time))
 
     -- give turn back to players
-    for i, player_session in pairs(instance.player_sessions) do
+    for i, player_session in pairs(self.player_sessions) do
       player_session:give_turn()
     end
   end)

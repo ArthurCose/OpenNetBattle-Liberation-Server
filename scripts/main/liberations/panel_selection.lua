@@ -39,7 +39,7 @@ function PanelSelection:select_panel(panel_object)
   self.objects = { object }
 end
 
--- shape = [m][n] bool array, n being odd, bottom center is player position
+-- shape = [m][n] bool array, n being odd, just below bottom center is player position
 function PanelSelection:set_shape(shape, shape_offset_x, shape_offset_y)
   shape_offset_x = shape_offset_x or 0
   shape_offset_y = shape_offset_y or 0
@@ -126,6 +126,7 @@ end
 -- todo: add an update function that is called when a player liberates a panel? may fix issues with overlapped panels
 
 -- private functions
+
 function resolve_selection_direction(player_pos, panel_object)
   -- resolving selection direction, can't use the Direction helper lib for this
   -- as we only allow for diagonal directions
