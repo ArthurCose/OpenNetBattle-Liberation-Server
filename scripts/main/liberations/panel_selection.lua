@@ -58,7 +58,7 @@ function PanelSelection:set_shape(shape, shape_offset_x, shape_offset_y)
     local center_x = (#row - 1) / 2
 
     for n, is_selected in ipairs(row) do
-      if not is_selected then
+      if is_selected == 0 or not is_selected then
         goto continue
       end
 
