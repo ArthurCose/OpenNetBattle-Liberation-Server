@@ -122,10 +122,15 @@ function PlayerSession:liberate_and_loot_panels(panels)
 end
 
 function PlayerSession:complete_turn()
-  self.instance.ready_count = self.instance.ready_count + 1
   self.completed_turn = true
   self.panel_selection:clear()
   Net.lock_player_input(self.player.id)
+
+  self.instance.ready_count = self.instance.ready_count + 1
+
+  if self.instance.ready_count < #self.instance.player_list then
+    Net.unlock_player_camera(self.player.id)
+  end
 end
 
 function PlayerSession:give_turn()
