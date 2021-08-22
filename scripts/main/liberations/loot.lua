@@ -263,7 +263,6 @@ function Loot.loot_item_panel(instance, player_session, panel)
     Async.await(panel.loot.activate(instance, player_session))
 
     remove_item_bot()
-    Net.unlock_player_camera()
   end)
 
   return Async.promisify(co)
