@@ -18,7 +18,7 @@ function EnemySelection:new(instance)
   local function filter(x, y, z)
     local tile = Net.get_tile(instance.area_id, x, y, z)
 
-    return tile.gid >= PANEL_GID or tile.gid <= LAST_PANEL_GID
+    return tile.gid >= PANEL_GID and tile.gid <= LAST_PANEL_GID
   end
 
   enemy_selection.selection:set_filter(filter)
