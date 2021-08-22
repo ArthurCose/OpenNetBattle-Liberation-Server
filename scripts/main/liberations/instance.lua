@@ -10,6 +10,17 @@ local function is_panel(self, object)
   return object.data.type == "tile" and object.data.gid >= self.FIRST_PANEL_GID and object.data.gid <= self.LAST_PANEL_GID
 end
 
+local function is_adjacent(position_a, position_b)
+  if position_a.z ~= position_b.z then
+    return false
+  end
+
+  local x_diff = math.abs(math.floor(position_a.x) - math.floor(position_b.x))
+  local y_diff = math.abs(math.floor(position_a.y) - math.floor(position_b.y))
+
+  return x_diff + y_diff == 1
+end
+
 local DARK_HOLE_SHAPE = {
   {1, 1, 1},
   {1, 1, 1},
@@ -336,6 +347,13 @@ function Mission:handle_object_interaction(player_id, object_id, button)
 
   if not object then
     -- must have been liberated
+    return
+  end
+
+  local player_position = Net.get_player_position(player_id)
+
+  if not is_adjacent(player_position, object) then
+    -- can't select panels diagonally
     return
   end
 
