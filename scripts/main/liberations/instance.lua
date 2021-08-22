@@ -326,6 +326,31 @@ function Mission:tick(elapsed)
 end
 
 function Mission:handle_tile_interaction(player_id, x, y, z, button)
+  local player_session = self.player_sessions[player_id]
+
+  if button == 1 then
+    -- Shoulder L
+    return
+  end
+
+  if player_session.completed_turn or Net.is_player_in_widget(player_id) then
+    -- ignore selection as it's not our turn or waiting for a response
+    return
+  end
+
+  local quiz_promise = player_session.player:quiz("Pass", "Cancel")
+
+  quiz_promise.and_then(function(response)
+      if response == 0 then
+        -- Pass
+        player_session:get_pass_turn_permission()
+      else
+        -- Cancel
+        Net.unlock_player_input(player_id)
+      end
+    end)
+
+  return
 end
 
 function Mission:handle_object_interaction(player_id, object_id, button)
