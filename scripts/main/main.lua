@@ -153,6 +153,16 @@ function transfer_players_to_new_instance(base_area, player_ids)
   instances[instance_id] = instance
 end
 
+function handle_player_avatar_change(player_id, details)
+  local player = players[player_id]
+
+  player.avatar_details = details
+
+  if player.activity then
+    player.activity:handle_player_avatar_change(player_id)
+  end
+end
+
 function handle_player_transfer(player_id)
   local player = players[player_id]
 
@@ -161,7 +171,7 @@ function handle_player_transfer(player_id)
   end
 end
 
-function handle_player_join(player_id)
+function handle_player_request(player_id)
   players[player_id] = Player:new(player_id)
 end
 

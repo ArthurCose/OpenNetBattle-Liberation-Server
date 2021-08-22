@@ -14,7 +14,8 @@ function Player:new(player_id)
     id = player_id,
     activity = nil,
     mug = Net.get_player_mugshot(player_id),
-    textbox_promise_resolvers = {}
+    textbox_promise_resolvers = {},
+    avatar_details = nil
   }
 
   setmetatable(player, self)
@@ -58,6 +59,17 @@ end
 function Player:handle_textbox_response(response)
   local resolve = table.remove(self.textbox_promise_resolvers, 1)
   resolve(response)
+end
+
+function Player:boot_to_lobby()
+  self.activity:handle_player_disconnect(self.id)
+  self.activity = nil
+
+  local spawn = Net.get_spawn_position("default")
+  Net.transfer_player(self.id, "default", true, spawn.x, spawn.y, spawn.z)
+
+  Net.set_player_health(self.id, self.avatar_details.max_health)
+  Net.set_player_max_health(self.id, self.avatar_details.max_health)
 end
 
 return Player

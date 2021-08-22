@@ -456,6 +456,12 @@ function Mission:handle_object_interaction(player_id, object_id, button)
   end)
 end
 
+function Mission:handle_player_avatar_change(player_id)
+  local player = self.player_sessions[player_id].player
+
+  player:boot_to_lobby()
+end
+
 function Mission:handle_player_transfer(player_id)
 end
 
