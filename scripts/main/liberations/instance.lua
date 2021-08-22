@@ -418,8 +418,22 @@ function Mission:handle_object_interaction(player_id, object_id, button)
 
   local ability = player_session.ability
 
+  local has_enemy = false
+
+  for _, enemy in ipairs(self.enemies) do
+    if (
+      math.min(panel.x) == enemy.x and
+      math.min(panel.y) == enemy.y and
+      enemy.z == panel.z
+   ) then
+      has_enemy = true
+      break
+    end
+  end
+
   local can_use_ability = (
     ability.question and -- no question = passive ability
+    not has_enemy and -- cant have an enemy standing on this tile
     self.order_points >= ability.cost and
     (
       panel.data.gid == self.BASIC_PANEL_GID or

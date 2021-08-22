@@ -6,9 +6,9 @@ function BlizzardMan:new(instance, position, direction)
     id = nil,
     is_boss = true,
     health = 400,
-    x = math.min(position.x) + .5,
-    y = math.min(position.y) + .5,
-    z = position.z,
+    x = math.floor(position.x),
+    y = math.floor(position.y),
+    z = math.floor(position.z),
     mug_texture_path = "/server/assets/mugs/blizzardman.png",
     mug_animation_path = "/server/assets/mugs/blizzardman.animation",
   }
@@ -27,8 +27,8 @@ function BlizzardMan:spawn(direction)
     animation_path = "/server/assets/bots/blizzardman.animation",
     area_id = self.instance.area_id,
     direction = direction,
-    x = self.x,
-    y = self.y,
+    x = self.x + .5,
+    y = self.y + .5,
     z = self.z
   })
 end

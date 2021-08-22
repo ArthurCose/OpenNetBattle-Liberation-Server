@@ -51,13 +51,22 @@ function PlayerSelection:new(instance, player_id)
       return false
     end
 
+    if panel == player_selection.root_panel then
+      return true
+    end
+
+    for _, enemy in ipairs(instance.enemies) do
+      if x == enemy.x and y == enemy.y and z == enemy.z then
+        -- can't liberate a panel with an enemy standing on it
+        -- unless it is the root_panel
+        return false
+      end
+    end
+
     return (
-      panel == player_selection.root_panel or
       panel.data.gid == instance.BASIC_PANEL_GID or
       panel.data.gid == instance.ITEM_PANEL_GID
     )
-
-    -- todo: detect if an enemy is standing on this panel
   end
 
   player_selection.selection:set_filter(filter)

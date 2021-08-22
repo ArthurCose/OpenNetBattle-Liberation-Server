@@ -8,9 +8,9 @@ function BigBrute:new(instance, position, direction)
     instance = instance,
     id = nil,
     health = 120,
-    x = math.min(position.x) + .5,
-    y = math.min(position.y) + .5,
-    z = position.z,
+    x = math.floor(position.x),
+    y = math.floor(position.y),
+    z = math.floor(position.z),
     selection = EnemySelection:new(instance)
   }
 
@@ -35,8 +35,8 @@ function BigBrute:spawn(direction)
     animation_path = "/server/assets/bots/bigbrute.animation",
     area_id = self.instance.area_id,
     direction = direction,
-    x = self.x,
-    y = self.y,
+    x = self.x + .5,
+    y = self.y + .5,
     z = self.z
   })
 end
