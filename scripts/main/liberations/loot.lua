@@ -130,8 +130,8 @@ local function spawn_item_bot(bot_data, property_animation)
       animation_path = "/server/assets/bots/item.animation",
       animation = "SHADOW",
       warp_in = false,
-      x = bot_data.x,
-      y = bot_data.y,
+      x = bot_data.x - 1 / 32,
+      y = bot_data.y - 1 / 32,
       z = bot_data.z,
     }
   )
