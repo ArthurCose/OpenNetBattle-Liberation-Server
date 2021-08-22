@@ -1,6 +1,6 @@
 -- todo: pass terrain to activate()? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
 
-function static_shape_generator(shape)
+local function static_shape_generator(shape)
   return function()
     return shape
   end
@@ -47,6 +47,7 @@ local Ability = {
     name = "PanelSearch",
     question = "Search in this area?",
     cost = 1,
+    -- todo: this should stretch to select all item panels in a line with dark panels between?
     generate_shape = static_shape_generator({
       {1},
       {1},

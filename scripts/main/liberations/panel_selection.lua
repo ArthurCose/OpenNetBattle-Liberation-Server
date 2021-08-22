@@ -1,8 +1,61 @@
 local Direction = require("scripts/libs/direction")
 
-local PanelSelection = {}
-
 local SELECTION_OFFSET = 1 / 32
+
+-- private functions
+
+local function resolve_selection_direction(player_pos, panel_object)
+  -- resolving selection direction, can't use the Direction helper lib for this
+  -- as we only allow for diagonal directions
+  local x_diff = panel_object.x + panel_object.height / 2 - player_pos.x
+  local y_diff = panel_object.y + panel_object.height / 2 - player_pos.y
+
+  if math.abs(x_diff) > math.abs(y_diff) then
+    -- x axis direction
+    if x_diff < 0 then
+      return Direction.UP_LEFT
+    else
+      return Direction.DOWN_RIGHT
+    end
+  else
+    -- y axis direction
+    if y_diff < 0 then
+      return Direction.UP_RIGHT
+    else
+      return Direction.DOWN_LEFT
+    end
+  end
+end
+
+local function generate_selection_object(panel_selection)
+  return {
+    x = panel_selection.root_panel.x + SELECTION_OFFSET,
+    y = panel_selection.root_panel.y + SELECTION_OFFSET,
+    z = panel_selection.root_panel.z,
+    width = 2,
+    height = 1,
+    data = {
+      type = "tile",
+      gid = panel_selection.SELECTED_PANEL_GID,
+    }
+  }
+end
+
+local function can_shape_select(instance, panel)
+  if panel == nil then
+    return false
+  end
+
+  return (
+    panel.data.gid == instance.BASIC_PANEL_GID or
+    panel.data.gid == instance.ITEM_PANEL_GID
+  )
+
+ -- todo: detect if an enemy is standing on this panel
+end
+
+-- public
+local PanelSelection = {}
 
 function PanelSelection:new(instance, player_id)
   local LIBERATING_PANEL_GID = Net.get_tileset(instance.area_id, "/server/assets/tiles/selected tile.tsx").first_gid
@@ -124,58 +177,6 @@ function PanelSelection:count_panels()
 end
 
 -- todo: add an update function that is called when a player liberates a panel? may fix issues with overlapped panels
-
--- private functions
-
-function resolve_selection_direction(player_pos, panel_object)
-  -- resolving selection direction, can't use the Direction helper lib for this
-  -- as we only allow for diagonal directions
-  local x_diff = panel_object.x + panel_object.height / 2 - player_pos.x
-  local y_diff = panel_object.y + panel_object.height / 2 - player_pos.y
-
-  if math.abs(x_diff) > math.abs(y_diff) then
-    -- x axis direction
-    if x_diff < 0 then
-      return Direction.UP_LEFT
-    else
-      return Direction.DOWN_RIGHT
-    end
-  else
-    -- y axis direction
-    if y_diff < 0 then
-      return Direction.UP_RIGHT
-    else
-      return Direction.DOWN_LEFT
-    end
-  end
-end
-
-function generate_selection_object(panel_selection)
-  return {
-    x = panel_selection.root_panel.x + SELECTION_OFFSET,
-    y = panel_selection.root_panel.y + SELECTION_OFFSET,
-    z = panel_selection.root_panel.z,
-    width = 2,
-    height = 1,
-    data = {
-      type = "tile",
-      gid = panel_selection.SELECTED_PANEL_GID,
-    }
-  }
-end
-
-function can_shape_select(instance, panel)
-  if panel == nil then
-    return false
-  end
-
-  return (
-    panel.data.gid == instance.BASIC_PANEL_GID or
-    panel.data.gid == instance.ITEM_PANEL_GID
-  )
-
- -- todo: detect if an enemy is standing on this panel
-end
 
 -- exports
 return PanelSelection

@@ -1,3 +1,12 @@
+-- private functions
+
+local function create_textbox_promise(textbox_promise_resolvers)
+  return Async.create_promise(function(resolve)
+    textbox_promise_resolvers[#textbox_promise_resolvers+1] = resolve
+  end)
+end
+
+-- public
 local Player = {}
 
 function Player:new(player_id)
@@ -49,14 +58,6 @@ end
 function Player:handle_textbox_response(response)
   local resolve = table.remove(self.textbox_promise_resolvers, 1)
   resolve(response)
-end
-
--- private functions
-
-function create_textbox_promise(textbox_promise_resolvers)
-  return Async.create_promise(function(resolve)
-    textbox_promise_resolvers[#textbox_promise_resolvers+1] = resolve
-  end)
 end
 
 return Player

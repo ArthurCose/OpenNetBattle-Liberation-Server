@@ -120,6 +120,36 @@ Loot.TEST_POOL = {
 
 local RISE_DURATION = .1
 
+-- private functions
+
+local function spawn_item_bot(bot_data, property_animation)
+  local shadow_id = Net.create_bot(
+    {
+      area_id = bot_data.area_id,
+      texture_path = "/server/assets/bots/item.png",
+      animation_path = "/server/assets/bots/item.animation",
+      animation = "SHADOW",
+      warp_in = false,
+      x = bot_data.x,
+      y = bot_data.y,
+      z = bot_data.z,
+    }
+  )
+
+  local id = Net.create_bot(bot_data)
+
+  Net.animate_bot_properties(id, property_animation)
+
+  function cleanup()
+    Net.remove_bot(shadow_id)
+    Net.remove_bot(id)
+  end
+
+  return cleanup
+end
+
+-- public functions
+
 -- returns a promise that resolves when the animation finishes
 -- resolved value is a function that cleans up the bot
 function Loot.spawn_item_bot(item, area_id, x, y, z)
@@ -266,34 +296,6 @@ function Loot.loot_bonus_panel(instance, player_session, panel)
   end)
 
   return Async.promisify(co)
-end
-
--- private functions
-
-function spawn_item_bot(bot_data, property_animation)
-  local shadow_id = Net.create_bot(
-    {
-      area_id = bot_data.area_id,
-      texture_path = "/server/assets/bots/item.png",
-      animation_path = "/server/assets/bots/item.animation",
-      animation = "SHADOW",
-      warp_in = false,
-      x = bot_data.x,
-      y = bot_data.y,
-      z = bot_data.z,
-    }
-  )
-
-  local id = Net.create_bot(bot_data)
-
-  Net.animate_bot_properties(id, property_animation)
-
-  function cleanup()
-    Net.remove_bot(shadow_id)
-    Net.remove_bot(id)
-  end
-
-  return cleanup
 end
 
 return Loot

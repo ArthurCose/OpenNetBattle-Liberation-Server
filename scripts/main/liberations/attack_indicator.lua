@@ -4,6 +4,24 @@ local Direction = require("scripts/libs/direction")
 
 local INDICATOR_OFFSET = 1 / 32
 
+-- private functions
+
+local function generate_selection_object(self)
+  return {
+    x = self.position.x + INDICATOR_OFFSET,
+    y = self.position.y + INDICATOR_OFFSET,
+    z = self.position.z,
+    width = 48 / 32,
+    height = 24 / 32,
+    data = {
+      type = "tile",
+      gid = self.INDICATOR_GID,
+    }
+  }
+end
+
+-- public
+
 local AttackIndicator = {}
 
 function AttackIndicator:new(instance, position, direction)
@@ -101,20 +119,6 @@ function AttackIndicator:clear()
 
   self.objects = {}
   self.shape = {{}}
-end
-
-function generate_selection_object(self)
-  return {
-    x = self.position.x + INDICATOR_OFFSET,
-    y = self.position.y + INDICATOR_OFFSET,
-    z = self.position.z,
-    width = 48 / 32,
-    height = 24 / 32,
-    data = {
-      type = "tile",
-      gid = self.INDICATOR_GID,
-    }
-  }
 end
 
 -- exports
