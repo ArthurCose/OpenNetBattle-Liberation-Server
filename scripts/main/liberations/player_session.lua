@@ -74,6 +74,11 @@ function PlayerSession:heal(amount)
   Net.set_player_health(self.player.id, self.health)
 end
 
+function PlayerSession:hurt(amount)
+  self.health = math.max(math.ceil(self.health - amount), 0)
+  Net.set_player_health(self.player.id, self.health)
+end
+
 function PlayerSession:pass_turn()
   -- heal up to 50% of health
   self:heal(self.max_health / 2)

@@ -69,6 +69,58 @@ function Selection:move(position, direction)
   self.direction = direction
 end
 
+function Selection:is_within(x, y, z)
+  x = math.floor(x)
+  y = math.floor(y)
+  z = math.floor(z)
+
+  if z ~= self.position.z then
+    return false
+  end
+
+  local offset_x = x - self.position.x
+  local offset_y = y - self.position.y
+
+  -- transform the player position to fit into the shape
+  -- default direction is UP RIGHT
+
+  if self.direction == Direction.DOWN_LEFT then
+    offset_x = -offset_x -- flipped
+    offset_y = -offset_y -- flipped
+  elseif self.direction == Direction.UP_LEFT then
+    local old_offset_y = offset_y
+    offset_y = -offset_x -- 🤷
+    offset_x = old_offset_y -- negative for going left
+  elseif self.direction == Direction.DOWN_RIGHT then
+    local old_offset_y = offset_y
+    offset_y = offset_x -- 🤷
+    offset_x = -old_offset_y -- positive for going right
+  end
+
+  offset_x = offset_x - self.shape_offset_x
+  offset_y = offset_y - self.shape_offset_y
+
+  if offset_y < 1 or offset_y > #self.shape then
+    return false
+  end
+
+  local row = self.shape[offset_y]
+  local center_x = (#row - 1) / 2
+  offset_x = offset_x + center_x + 1
+
+  if offset_x < 1 or offset_x > #row then
+    return false
+  end
+
+  local is_selected = row[offset_x]
+
+  if is_selected == 0 or not is_selected then
+    return false
+  end
+
+  return self.filter(x, y, z)
+end
+
 function Selection:indicate()
   -- generating objects
   for m, row in ipairs(self.shape) do

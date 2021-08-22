@@ -1,5 +1,4 @@
 local Selection = require("scripts/main/liberations/selection")
-local Direction = require("scripts/libs/direction")
 
 local EnemySelection = {}
 
@@ -48,20 +47,11 @@ function EnemySelection:detect_player_sessions()
   local sessions = {}
 
   for _, player_session in pairs(self.instance.player_sessions) do
-    -- if self.selection.direction == Direction.DOWN_LEFT then
-    --   offset_x = -offset_x -- flipped
-    --   offset_y = -offset_y -- flipped
-    -- elseif self.selection.direction == Direction.UP_LEFT then
-    --   local old_offset_y = offset_y
-    --   offset_y = -offset_x -- 🤷
-    --   offset_x = old_offset_y -- negative for going left
-    -- elseif self.selection.direction == Direction.DOWN_RIGHT then
-    --   local old_offset_y = offset_y
-    --   offset_y = offset_x -- 🤷
-    --   offset_x = -old_offset_y -- positive for going right
-    -- end
+    local player_pos = Net.get_player_position(player_session.player.id)
 
-    -- sessions[#sessions+1] = player_session
+    if self.selection:is_within(player_pos.x, player_pos.y, player_pos.z) then
+      sessions[#sessions+1] = player_session
+    end
   end
 
   return sessions
