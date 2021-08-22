@@ -117,7 +117,7 @@ local function take_enemy_turn(self)
 
   local co = coroutine.create(function()
     for _, enemy in ipairs(self.enemies) do
-      for _, player in ipairs(self.player_list) do
+      for _, player in ipairs(self.players) do
         Net.slide_player_camera(player.id, enemy.x, enemy.y, enemy.z, slide_time)
       end
 
@@ -131,7 +131,7 @@ local function take_enemy_turn(self)
     end
 
     -- completed turn, return camera to players
-    for i, player in pairs(self.player_list) do
+    for i, player in pairs(self.players) do
       local player_pos = Net.get_player_position(player.id)
       Net.slide_player_camera(player.id, player_pos.x, player_pos.y, player_pos.z, slide_time)
       Net.unlock_player_camera(player.id)
@@ -173,7 +173,7 @@ function Mission:new(base_area_id, new_area_id, players)
     order_points = 3,
     MAX_ORDER_POINTS = 8,
     points_of_interest = {},
-    player_list = players,
+    players = players,
     player_sessions = {},
     boss = nil,
     enemies = {},
@@ -268,7 +268,7 @@ function Mission:begin()
   local slide_time = .7
   local total_camera_time = 0
 
-  for _, player in ipairs(self.player_list) do
+  for _, player in ipairs(self.players) do
     -- create data
     self.player_sessions[player.id] = PlayerSession:new(self, player)
 
@@ -299,7 +299,7 @@ function Mission:begin()
   if not debug then
     -- release players after camera animation
     Async.sleep(total_camera_time).and_then(function()
-      for _, player in ipairs(self.player_list) do
+      for _, player in ipairs(self.players) do
         Net.unlock_player_input(player.id)
       end
     end)
@@ -307,7 +307,7 @@ function Mission:begin()
 end
 
 function Mission:tick(elapsed)
-  if self.ready_count == #self.player_list then
+  if self.ready_count == #self.players then
     self.ready_count = 0
     -- now we can take a turn !
     take_enemy_turn(self)
@@ -442,9 +442,9 @@ function Mission:handle_player_transfer(player_id)
 end
 
 function Mission:handle_player_disconnect(player_id)
-  for i, player in ipairs(self.player_list) do
+  for i, player in ipairs(self.players) do
     if player_id == player.id then
-      table.remove(self.player_list, i)
+      table.remove(self.players, i)
       break
     end
   end
@@ -453,8 +453,8 @@ function Mission:handle_player_disconnect(player_id)
   self.player_sessions[player_id] = nil
 end
 
-function Mission:list_players()
-  return self.player_list
+function Mission:get_players()
+  return self.players
 end
 
 function Mission:get_spawn_position()

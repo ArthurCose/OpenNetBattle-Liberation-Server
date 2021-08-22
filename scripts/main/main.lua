@@ -18,7 +18,7 @@ function tick(elapsed)
   for area_id, instance in pairs(instances) do
     instance:tick(elapsed)
 
-    if #instance:list_players() == 0 then
+    if #instance:get_players() == 0 then
       dead_instances[#dead_instances + 1] = area_id
     end
   end
@@ -179,7 +179,7 @@ end
 function remove_instance(area_id)
   local instance = instances[area_id]
 
-  for _, player in ipairs(instance:list_players()) do
+  for _, player in ipairs(instance:get_players()) do
     Net.transfer_player(player.id, waiting_area, true)
 
     -- could possibly do this once

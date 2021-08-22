@@ -133,7 +133,7 @@ function PlayerSession:complete_turn()
 
   self.instance.ready_count = self.instance.ready_count + 1
 
-  if self.instance.ready_count < #self.instance.player_list then
+  if self.instance.ready_count < #self.instance.players then
     Net.unlock_player_camera(self.player.id)
   end
 end
