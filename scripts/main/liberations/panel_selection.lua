@@ -1,6 +1,5 @@
+local Selection = require("scripts/main/liberations/selection")
 local Direction = require("scripts/libs/direction")
-
-local SELECTION_OFFSET = 1 / 32
 
 -- private functions
 
@@ -27,33 +26,6 @@ local function resolve_selection_direction(player_pos, panel_object)
   end
 end
 
-local function generate_selection_object(panel_selection)
-  return {
-    x = panel_selection.root_panel.x + SELECTION_OFFSET,
-    y = panel_selection.root_panel.y + SELECTION_OFFSET,
-    z = panel_selection.root_panel.z,
-    width = 2,
-    height = 1,
-    data = {
-      type = "tile",
-      gid = panel_selection.SELECTED_PANEL_GID,
-    }
-  }
-end
-
-local function can_shape_select(instance, panel)
-  if panel == nil then
-    return false
-  end
-
-  return (
-    panel.data.gid == instance.BASIC_PANEL_GID or
-    panel.data.gid == instance.ITEM_PANEL_GID
-  )
-
- -- todo: detect if an enemy is standing on this panel
-end
-
 -- public
 local PanelSelection = {}
 
@@ -64,9 +36,7 @@ function PanelSelection:new(instance, player_id)
     player_id = player_id,
     instance = instance,
     root_panel = nil,
-    selection_direction = nil,
-    objects = {},
-    shape = {{}},
+    selection = Selection:new(instance),
     LIBERATING_PANEL_GID = LIBERATING_PANEL_GID,
     SELECTED_PANEL_GID = LIBERATING_PANEL_GID + 1
   }
@@ -74,87 +44,57 @@ function PanelSelection:new(instance, player_id)
   setmetatable(panel_selection, self)
   self.__index = self
 
+  local function filter(x, y, z)
+    local panel = instance:get_panel_at(x, y, z)
+
+    if panel == nil then
+      return false
+    end
+
+    return (
+      panel == panel_selection.root_panel or
+      panel.data.gid == instance.BASIC_PANEL_GID or
+      panel.data.gid == instance.ITEM_PANEL_GID
+    )
+
+    -- todo: detect if an enemy is standing on this panel
+  end
+
+  panel_selection.selection:set_filter(filter)
+  panel_selection.selection:set_indicator({
+    gid = panel_selection.SELECTED_PANEL_GID,
+    width = 64,
+    height = 32,
+    offset_x = 1,
+    offset_y = 1,
+  })
+
   return panel_selection
 end
 
 function PanelSelection:select_panel(panel_object)
-  self:clear()
-
   self.root_panel = panel_object
-  self.shape = {{1}}
 
   local player_pos = Net.get_player_position(self.player_id)
-  self.selection_direction = resolve_selection_direction(player_pos, panel_object)
+  local direction = resolve_selection_direction(player_pos, panel_object)
+  self.selection:move(player_pos, direction)
+  self.selection:set_shape({{1}})
 
-  -- create selection object
-  local object = generate_selection_object(self)
-  object.id = Net.create_object(self.instance.area_id, object)
-  self.objects = { object }
+  self.selection:remove_indicators()
+  self.selection:indicate()
 end
 
 -- shape = [m][n] bool array, n being odd, just below bottom center is player position
 function PanelSelection:set_shape(shape, shape_offset_x, shape_offset_y)
-  shape_offset_x = shape_offset_x or 0
-  shape_offset_y = shape_offset_y or 0
-
-  local root_panel = self.root_panel
-
-  -- delete old objects
-  self:clear()
-
-  -- update shape
-  self.root_panel = root_panel
-  self.shape = shape
-
-  -- generating objects
-  for m, row in ipairs(shape) do
-    local center_x = (#row - 1) / 2
-
-    for n, is_selected in ipairs(row) do
-      if is_selected == 0 or not is_selected then
-        goto continue
-      end
-
-      -- facing up right by default
-      local offset_x = n + shape_offset_x - center_x - 1
-      local offset_y = -(m + shape_offset_y - 1)
-
-      -- adjusting the offset to the direction
-      if self.selection_direction == Direction.DOWN_LEFT then
-        offset_x = -offset_x -- flipped
-        offset_y = -offset_y -- flipped
-      elseif self.selection_direction == Direction.UP_LEFT then
-        local old_offset_y = offset_y
-        offset_y = -offset_x -- 🤷
-        offset_x = old_offset_y -- negative for going left
-      elseif self.selection_direction == Direction.DOWN_RIGHT then
-        local old_offset_y = offset_y
-        offset_y = offset_x -- 🤷
-        offset_x = -old_offset_y -- positive for going right
-      end
-
-      -- actually generating the object
-      local object = generate_selection_object(self)
-      object.x = object.x + offset_x
-      object.y = object.y + offset_y
-
-      local panel = self.instance:get_panel_at(object.x, object.y)
-      if panel ~= root_panel and not can_shape_select(self.instance, panel) then
-        goto continue
-      end
-
-      object.id = Net.create_object(self.instance.area_id, object)
-      self.objects[#self.objects+1] = object
-
-      ::continue::
-    end
-  end
+  self.selection:set_shape(shape, shape_offset_x, shape_offset_y)
+  self.selection:remove_indicators()
+  self.selection:indicate()
 end
 
 function PanelSelection:get_panels()
   local panels = {}
 
-  for _, object in pairs(self.objects) do
+  for _, object in pairs(self.selection.objects) do
     panels[#panels+1] = self.instance:get_panel_at(object.x, object.y)
   end
 
@@ -162,14 +102,7 @@ function PanelSelection:get_panels()
 end
 
 function PanelSelection:clear()
-  -- delete objects
-  for _, object in pairs(self.objects) do
-    Net.remove_object(self.instance.area_id, object.id)
-  end
-
-  self.root_panel = nil
-  self.objects = {}
-  self.shape = {{}}
+  self.selection:remove_indicators()
 end
 
 function PanelSelection:count_panels()
