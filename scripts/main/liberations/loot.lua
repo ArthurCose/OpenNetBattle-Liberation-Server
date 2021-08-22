@@ -1,7 +1,3 @@
-local counter = 0
-local ID_PREFIX = "LIB_ITEM"
-local SHADOW_ID_PREFIX = "LIB_SHADOW"
-
 local Loot = {
   HEART = {
     animation = "HEART",
@@ -275,12 +271,7 @@ end
 -- private functions
 
 function spawn_item_bot(bot_data, property_animation)
-  local id = ID_PREFIX .. counter
-  local shadow_id = SHADOW_ID_PREFIX .. counter
-  counter = counter + 1
-
-  Net.create_bot(
-    shadow_id,
+  local shadow_id = Net.create_bot(
     {
       area_id = bot_data.area_id,
       texture_path = "/server/assets/bots/item.png",
@@ -293,10 +284,7 @@ function spawn_item_bot(bot_data, property_animation)
     }
   )
 
-  Net.create_bot(
-    id,
-    bot_data
-  )
+  local id = Net.create_bot(bot_data)
 
   Net.animate_bot_properties(id, property_animation)
 

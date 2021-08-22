@@ -1,6 +1,5 @@
 local Direction = require("scripts/libs/direction")
 
-local id = "tutorial_prog"
 local area = "default"
 local texture_path= "/server/assets/bots/prog.png"
 local animation_path = "/server/assets/bots/prog.animation"
@@ -11,7 +10,7 @@ local solid = true
 local player_states = {}
 local explanation_timers = {}
 
-Net.create_bot(id, {
+local id = Net.create_bot({
   area_id = area,
   texture_path = texture_path,
   animation_path = animation_path,
