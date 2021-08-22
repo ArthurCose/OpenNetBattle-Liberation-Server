@@ -339,7 +339,7 @@ function Mission:handle_tile_interaction(player_id, x, y, z, button)
     return
   end
 
-  local quiz_promise = player_session.player:quiz("Pass", "Cancel")
+  local quiz_promise = player_session:quiz_with_points("Pass", "Cancel")
 
   quiz_promise.and_then(function(response)
       if response == 0 then
@@ -401,7 +401,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
 
   if not can_liberate then
     -- indestructible panels
-    local quiz_promise = player_session.player:quiz("Pass", "Cancel")
+    local quiz_promise = player_session:quiz_with_points("Pass", "Cancel")
 
     quiz_promise.and_then(function(response)
         if response == 0 then
@@ -420,7 +420,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
 
   local can_use_ability = (
     ability.question and -- no question = passive ability
-    self.order_points > ability.cost and
+    self.order_points >= ability.cost and
     (
       panel.data.gid == self.BASIC_PANEL_GID or
       panel.data.gid == self.ITEM_PANEL_GID
@@ -430,7 +430,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
   if not can_use_ability then
     player_session.selection:select_panel(panel)
 
-    local quiz_promise = player_session.player:quiz(
+    local quiz_promise = player_session:quiz_with_points(
       "Liberation",
       "Pass",
       "Cancel"
@@ -457,7 +457,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
 
   player_session.selection:select_panel(panel)
 
-  local quiz_promise = player_session.player:quiz(
+  local quiz_promise = player_session:quiz_with_points(
     "Liberation",
     ability.name,
     "Pass"

@@ -24,6 +24,34 @@ function PlayerSession:new(instance, player)
   return player_session
 end
 
+local order_points_mug_texture = "/server/assets/mugs/order pts.png"
+local order_points_mug_animations = {
+  "/server/assets/mugs/order pts 0.animation",
+  "/server/assets/mugs/order pts 1.animation",
+  "/server/assets/mugs/order pts 2.animation",
+  "/server/assets/mugs/order pts 3.animation",
+  "/server/assets/mugs/order pts 4.animation",
+  "/server/assets/mugs/order pts 5.animation",
+  "/server/assets/mugs/order pts 6.animation",
+  "/server/assets/mugs/order pts 7.animation",
+  "/server/assets/mugs/order pts 8.animation",
+}
+
+function PlayerSession:message_with_points(message)
+  local mug_animation = order_points_mug_animations[self.instance.order_points + 1]
+  return self.player:message(message, order_points_mug_texture, mug_animation)
+end
+
+function PlayerSession:question_with_points(question)
+  local mug_animation = order_points_mug_animations[self.instance.order_points + 1]
+  return self.player:question(question, order_points_mug_texture, mug_animation)
+end
+
+function PlayerSession:quiz_with_points(a, b, c)
+  local mug_animation = order_points_mug_animations[self.instance.order_points + 1]
+  return self.player:quiz(a, b, c, order_points_mug_texture, mug_animation)
+end
+
 function PlayerSession:get_ability_permission()
   local question_promise = self.player:question_with_mug(self.ability.question)
 
