@@ -18,4 +18,24 @@ function EnemyHelpers.play_attack_animation(enemy)
   Net.animate_bot(enemy.id, animation)
 end
 
+function EnemyHelpers.offset_position_with_direction(position, direction)
+  position = {
+    x = position.x,
+    y = position.y,
+    z = position.z
+  }
+
+  if direction == Direction.DOWN_LEFT then
+    position.y = position.y + 1
+  elseif direction == Direction.DOWN_RIGHT then
+    position.x = position.x + 1
+  elseif direction == Direction.UP_LEFT then
+    position.x = position.x - 1
+  elseif direction == Direction.UP_RIGHT then
+    position.x = position.y - 1
+  end
+
+  return position
+end
+
 return EnemyHelpers

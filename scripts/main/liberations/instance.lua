@@ -233,6 +233,11 @@ function Mission:new(base_area_id, new_area_id, players)
         mission.indestructible_panels[#mission.indestructible_panels+1] = object
       end
 
+      -- insert the panel before spawning enemies
+      local x = math.floor(object.x) + 1
+      local y = math.floor(object.y) + 1
+      mission.panels[y][x] = object
+
       -- spawning bosses
       if object.custom_properties.Boss then
         local name = object.custom_properties.Boss
@@ -258,10 +263,6 @@ function Mission:new(base_area_id, new_area_id, players)
 
         mission.enemies[#mission.enemies + 1] = enemy -- make the boss the first enemy in the list
       end
-
-      local x = math.floor(object.x) + 1
-      local y = math.floor(object.y) + 1
-      mission.panels[y][x] = object
     end
   end
 
