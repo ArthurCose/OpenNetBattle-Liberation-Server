@@ -10,17 +10,17 @@ end
 local Player = {}
 
 function Player:new(player_id)
-  local panel_selection = {
+  local player = {
     id = player_id,
     activity = nil,
     mug = Net.get_player_mugshot(player_id),
     textbox_promise_resolvers = {}
   }
 
-  setmetatable(panel_selection, self)
+  setmetatable(player, self)
   self.__index = self
 
-  return panel_selection
+  return player
 end
 
 -- all messages to this player should be made through the session while the session is alive

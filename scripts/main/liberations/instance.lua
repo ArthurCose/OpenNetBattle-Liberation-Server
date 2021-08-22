@@ -2,7 +2,7 @@ local PlayerSession = require("scripts/main/liberations/player_session")
 local Enemy = require("scripts/main/liberations/enemy")
 local Loot = require("scripts/main/liberations/loot")
 
-local debug = false
+local debug = true
 
 -- private functions
 
@@ -62,15 +62,15 @@ end
 
 -- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
 local function liberate_panel(self, player_session)
-  local panel_selection = player_session.panel_selection
-  local panel = panel_selection.root_panel
+  local selection = player_session.selection
+  local panel = selection.root_panel
 
   local co = coroutine.create(function()
     if panel.data.gid == self.BONUS_PANEL_GID then
       Async.await(player_session.player:message_with_mug("A BonusPanel!"))
 
       self:remove_panel(panel)
-      panel_selection:clear()
+      selection:clear()
 
       Async.await(Loot.loot_bonus_panel(self, player_session, panel))
 
@@ -80,8 +80,8 @@ local function liberate_panel(self, player_session)
 
       -- todo: battle
 
-      panel_selection:set_shape(DARK_HOLE_SHAPE, 0, -1)
-      local panels = panel_selection:get_panels()
+      selection:set_shape(DARK_HOLE_SHAPE, 0, -1)
+      local panels = selection:get_panels()
 
       Async.await(player_session:liberate_panels(panels))
 
@@ -102,7 +102,7 @@ local function liberate_panel(self, player_session)
 
       -- todo: battle
 
-      local panels = player_session.panel_selection:get_panels()
+      local panels = player_session.selection:get_panels()
       Async.await(player_session:liberate_and_loot_panels(panels))
       player_session:complete_turn()
     end
@@ -378,7 +378,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
   )
 
   if not can_use_ability then
-    player_session.panel_selection:select_panel(panel)
+    player_session.selection:select_panel(panel)
 
     local quiz_promise = player_session.player:quiz(
       "Liberation",
@@ -392,11 +392,11 @@ function Mission:handle_object_interaction(player_id, object_id, button)
         liberate_panel(self, player_session)
       elseif response == 1 then
         -- Pass
-        player_session.panel_selection:clear()
+        player_session.selection:clear()
         player_session:get_pass_turn_permission()
       else
         -- Cancel
-        player_session.panel_selection:clear()
+        player_session.selection:clear()
         Net.unlock_player_input(player_id)
       end
     end)
@@ -405,7 +405,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
   end
 
 
-  player_session.panel_selection:select_panel(panel)
+  player_session.selection:select_panel(panel)
 
   local quiz_promise = player_session.player:quiz(
     "Liberation",
@@ -420,13 +420,13 @@ function Mission:handle_object_interaction(player_id, object_id, button)
     elseif response == 1 then
       -- Ability
       local selection_shape = ability.generate_shape(self, player_session)
-      player_session.panel_selection:set_shape(selection_shape)
+      player_session.selection:set_shape(selection_shape)
 
       -- ask if we should use the ability
       player_session:get_ability_permission()
     elseif response == 2 then
       -- Pass
-      player_session.panel_selection:clear()
+      player_session.selection:clear()
       player_session:get_pass_turn_permission()
     end
   end)

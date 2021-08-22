@@ -19,7 +19,7 @@ local Ability = {
     activate = function (instance, player_session)
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
 
-      local panels = player_session.panel_selection:get_panels()
+      local panels = player_session.selection:get_panels()
 
       player_session:liberate_and_loot_panels(panels).and_then(function()
         player_session:complete_turn()
@@ -36,7 +36,7 @@ local Ability = {
     activate = function (instance, player_session)
       -- todo: start battle, needs success handler? maybe on the player_data like on_response?
 
-      local panels = player_session.panel_selection:get_panels()
+      local panels = player_session.selection:get_panels()
 
       player_session:liberate_and_loot_panels(panels).and_then(function()
         player_session:complete_turn()

@@ -1,5 +1,5 @@
 local Ability = require("scripts/main/liberations/ability")
-local PanelSelection = require("scripts/main/liberations/panel_selection")
+local PlayerSelection = require("scripts/main/liberations/player_selection")
 local Loot = require("scripts/main/liberations/loot")
 
 local PlayerSession = {}
@@ -11,7 +11,7 @@ function PlayerSession:new(instance, player)
     health = 100,
     max_health = 100,
     completed_turn = false,
-    panel_selection = PanelSelection:new(instance, player.id),
+    selection = PlayerSelection:new(instance, player.id),
     ability = Ability.LongSwrd, -- todo: resolve from element/name
   }
 
@@ -30,7 +30,7 @@ function PlayerSession:get_ability_permission()
   question_promise.and_then(function(response)
     if response == 0 then
       -- No
-      self.panel_selection:clear()
+      self.selection:clear()
       Net.unlock_player_input(self.player.id)
       return
     end
@@ -90,7 +90,7 @@ function PlayerSession:liberate_panels(panels)
       self.instance:remove_panel(panel)
     end
 
-    self.panel_selection:clear()
+    self.selection:clear()
 
     Async.await(self.player:message_with_mug("Yeah!\nI liberated it!"))
   end)
@@ -123,7 +123,7 @@ end
 
 function PlayerSession:complete_turn()
   self.completed_turn = true
-  self.panel_selection:clear()
+  self.selection:clear()
   Net.lock_player_input(self.player.id)
 
   self.instance.ready_count = self.instance.ready_count + 1
@@ -139,7 +139,7 @@ function PlayerSession:give_turn()
 end
 
 function PlayerSession:handle_disconnect()
-  self.panel_selection:clear()
+  self.selection:clear()
 
   if self.completed_turn then
     self.instance.ready_count = self.instance.ready_count - 1
