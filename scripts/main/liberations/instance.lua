@@ -469,8 +469,8 @@ function Mission:handle_object_interaction(player_id, object_id, button)
       liberate_panel(self, player_session)
     elseif response == 1 then
       -- Ability
-      local selection_shape = ability.generate_shape(self, player_session)
-      player_session.selection:set_shape(selection_shape)
+      local selection_shape, shape_offset_x, shape_offset_y = ability.generate_shape(self, player_session)
+      player_session.selection:set_shape(selection_shape, shape_offset_x, shape_offset_y)
 
       -- ask if we should use the ability
       player_session:get_ability_permission()

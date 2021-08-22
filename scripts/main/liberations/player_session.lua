@@ -12,7 +12,7 @@ function PlayerSession:new(instance, player)
     max_health = 100,
     completed_turn = false,
     selection = PlayerSelection:new(instance, player.id),
-    ability = Ability.LongSwrd, -- todo: resolve from element/name
+    ability = Ability.resolve_for_player(player),
   }
 
   setmetatable(player_session, self)
