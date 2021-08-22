@@ -1,4 +1,5 @@
 local PlayerSession = require("scripts/main/liberations/player_session")
+local Enemy = require("scripts/main/liberations/enemy")
 local Loot = require("scripts/main/liberations/loot")
 
 local debug = false
@@ -11,14 +12,15 @@ function Mission:new(base_area_id, new_area_id, players)
 
   local mission = {
     area_id = new_area_id,
-    boss = nil,
-    enemies = {},
-    points_of_interest = {},
-    player_list = players,
+    phase = 1,
     ready_count = 0,
-    player_sessions = {},
     order_points = 3,
     MAX_ORDER_POINTS = 8,
+    points_of_interest = {},
+    player_list = players,
+    player_sessions = {},
+    boss = nil,
+    enemies = {},
     panels = {},
     dark_hole_count = 0,
     indestructible_panels = {},
@@ -28,7 +30,7 @@ function Mission:new(base_area_id, new_area_id, players)
     DARK_HOLE_PANEL_GID = FIRST_PANEL_GID + 2,
     INDESTRUCTIBLE_PANEL_GID = FIRST_PANEL_GID + 3,
     BONUS_PANEL_GID = FIRST_PANEL_GID + 4,
-    LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1
+    LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1,
   }
 
   for i = 1, Net.get_height(base_area_id), 1 do
@@ -46,14 +48,7 @@ function Mission:new(base_area_id, new_area_id, players)
   for _, object_id in ipairs(object_ids) do
     local object = Net.get_object_by_id(mission.area_id, object_id)
 
-    if object.name == "Boss" then
-      mission.boss = object
-      table.insert(mission.enemies, 1, object) -- make the boss the first enemy in the list
-    elseif object.name == "Enemy" then
-      mission.enemies[#mission.enemies + 1] = object
-      -- delete to reduce map size
-      Net.remove_object(mission.area_id, object_id)
-    elseif object.name == "Point of Interest" then
+    if object.name == "Point of Interest" then
       -- track points of interest for the camera
       mission.points_of_interest[#mission.points_of_interest + 1] = object
       -- delete to reduce map size
@@ -70,6 +65,32 @@ function Mission:new(base_area_id, new_area_id, players)
         mission.indestructible_panels[#mission.indestructible_panels+1] = object
       end
 
+      -- spawning bosses
+      if object.custom_properties.Boss then
+        local name = object.custom_properties.Boss
+        local direction = object.custom_properties.Direction
+        local enemy = Enemy.from(mission, object, direction, name)
+        enemy.is_boss = true
+
+        mission.boss = enemy
+        table.insert(mission.enemies, 1, enemy) -- make the boss the first enemy in the list
+      end
+
+      -- spawning enemies
+      if object.custom_properties.Spawns then
+        local name = object.custom_properties.Spawns
+        local direction = object.custom_properties.Direction
+        local position = {
+          x = object.x,
+          y = object.y,
+          z = object.z
+        }
+
+        local enemy = Enemy.from(mission, position, direction, name)
+
+        mission.enemies[#mission.enemies + 1] = enemy -- make the boss the first enemy in the list
+      end
+
       local x = math.floor(object.x) + 1
       local y = math.floor(object.y) + 1
       mission.panels[y][x] = object
@@ -77,6 +98,14 @@ function Mission:new(base_area_id, new_area_id, players)
   end
 
   return mission
+end
+
+function Mission:clean_up()
+  for _, enemy in ipairs(self.enemies) do
+    Net.remove_bot(enemy.id)
+  end
+
+  Net.remove_area(self.area_id)
 end
 
 function Mission:begin()
@@ -126,8 +155,8 @@ end
 function Mission:tick(elapsed)
   if self.ready_count == #self.player_list then
     self.ready_count = 0
-    take_enemy_turn(self)
     -- now we can take a turn !
+    take_enemy_turn(self)
   end
 end
 
@@ -428,7 +457,7 @@ function take_enemy_turn(self)
       -- wait until the camera is done moving
       Async.await(Async.sleep(slide_time))
 
-      -- todo: attack
+      Async.await(enemy:take_turn())
 
       -- wait a short amount of time to look nicer if there was no action taken
       Async.await(Async.sleep(hold_time))
@@ -445,9 +474,11 @@ function take_enemy_turn(self)
     Async.await(Async.sleep(slide_time))
 
     -- give turn back to players
-    for i, player_session in pairs(self.player_sessions) do
+    for _, player_session in pairs(self.player_sessions) do
       player_session:give_turn()
     end
+
+    self.phase = self.phase + 1
   end)
 
   Async.promisify(co)

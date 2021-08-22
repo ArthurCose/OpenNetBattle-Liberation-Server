@@ -193,6 +193,7 @@ function remove_instance(area_id)
     player.activity = nil
   end
 
-  Net.remove_area(instance.area_id)
+  instance:clean_up()
+
   instances[area_id] = nil
 end
