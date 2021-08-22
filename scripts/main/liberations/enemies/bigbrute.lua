@@ -1,3 +1,4 @@
+local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local EnemySelection = require("scripts/main/liberations/enemy_selection")
 
 local BigBrute = {}
@@ -54,6 +55,8 @@ function BigBrute:take_turn()
 
     Async.await(Async.sleep(1))
 
+    EnemyHelpers.play_attack_animation(self)
+
     local spawned_bots = {}
 
     for _, player_session in ipairs(caught_sessions) do
@@ -73,7 +76,13 @@ function BigBrute:take_turn()
       player_session:hurt(20)
     end
 
-    Async.await(Async.sleep(1))
+    Async.await(Async.sleep(.5))
+
+    for _, player in ipairs(self.instance.players) do
+      Net.shake_player_camera(player.id, 2, .5)
+    end
+
+    Async.await(Async.sleep(.5))
 
     for _, bot_id in ipairs(spawned_bots) do
       Net.remove_bot(bot_id, false)
