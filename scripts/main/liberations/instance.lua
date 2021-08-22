@@ -146,6 +146,14 @@ local function take_enemy_turn(self)
     end
 
     self.phase = self.phase + 1
+
+    if self.needs_disposal then
+      for _, enemy in ipairs(self.enemies) do
+        Net.remove_bot(enemy.id)
+      end
+
+      Net.remove_area(self.area_id)
+    end
   end)
 
   Async.promisify(co)
@@ -179,6 +187,7 @@ function Mission:new(base_area_id, new_area_id, players)
     INDESTRUCTIBLE_PANEL_GID = FIRST_PANEL_GID + 3,
     BONUS_PANEL_GID = FIRST_PANEL_GID + 4,
     LAST_PANEL_GID = FIRST_PANEL_GID + TOTAL_PANEL_GIDS - 1,
+    needs_disposal = false
   }
 
   for i = 1, Net.get_height(base_area_id), 1 do
@@ -249,11 +258,8 @@ function Mission:new(base_area_id, new_area_id, players)
 end
 
 function Mission:clean_up()
-  for _, enemy in ipairs(self.enemies) do
-    Net.remove_bot(enemy.id)
-  end
-
-  Net.remove_area(self.area_id)
+  -- mark as needs_disposal to clean up after async functions complete
+  self.needs_disposal = true
 end
 
 function Mission:begin()
