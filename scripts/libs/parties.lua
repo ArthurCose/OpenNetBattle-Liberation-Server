@@ -1,10 +1,12 @@
+local Emotes = require("scripts/libs/emotes")
+
 local Parties = {}
 
 local parties = {} -- { members, playing }[]
 local pending_requests = {} -- { requester, recruit, elapsed }[]
 local tick_timer = 0
-local REQUEST_EMOTE = 10
-local ACCEPT_EMOTE = 0
+local REQUEST_EMOTE = Emotes.QUESTION
+local ACCEPT_EMOTE = Emotes.HAPPY
 
 function Parties.get(party_index)
   return parties[party_index]

@@ -1,3 +1,4 @@
+local Emotes = require("scripts/libs/emotes")
 local Direction = require("scripts/libs/direction")
 
 local area = "default"
@@ -109,13 +110,13 @@ local response_handlers = {
   ["parties intro"] = "recruit example",
   ["recruit example"] = "recruit",
   ["recruit"] = function(player_id)
-    Net.exclusive_player_emote(player_id, id, 10)
+    Net.exclusive_player_emote(player_id, id, Emotes.QUESTION)
     explanation_timers[player_id] = 2
     return "recruit"
   end,
   ["recruit responding"] = function(player_id)
-    Net.exclusive_player_emote(player_id, id, 0)
-    Net.exclusive_player_emote(player_id, player_id, 0)
+    Net.exclusive_player_emote(player_id, id, Emotes.HAPPY)
+    Net.exclusive_player_emote(player_id, player_id, Emotes.HAPPY)
     explanation_timers[player_id] = 2
     return "recruit responding"
   end,
