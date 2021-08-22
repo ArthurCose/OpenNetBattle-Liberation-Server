@@ -6,6 +6,7 @@ function BigBrute:new(instance, position, direction)
   local bigbrute = {
     instance = instance,
     id = nil,
+    health = 120,
     x = math.min(position.x) + .5,
     y = math.min(position.y) + .5,
     z = position.z,

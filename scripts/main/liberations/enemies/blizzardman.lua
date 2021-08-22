@@ -5,6 +5,7 @@ function BlizzardMan:new(instance, position, direction)
     instance = instance,
     id = nil,
     is_boss = true,
+    health = 400,
     x = math.min(position.x) + .5,
     y = math.min(position.y) + .5,
     z = position.z,
