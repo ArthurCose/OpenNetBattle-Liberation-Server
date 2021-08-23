@@ -114,6 +114,12 @@ local function liberate_panel(self, player_session)
 
       -- todo: battle
 
+      -- destroy enemy
+      local enemy = self:get_enemy_at(panel.x, panel.y, panel.z)
+      if enemy then
+        Async.await(Enemy.destroy(self, enemy))
+      end
+
       local panels = player_session.selection:get_panels()
       Async.await(player_session:liberate_and_loot_panels(panels))
       player_session:complete_turn()
@@ -555,6 +561,20 @@ function Mission:remove_panel(panel)
     row[x] = nil
   end
 end
+
+function Mission:get_enemy_at(x, y, z)
+  x = math.floor(x)
+  y = math.floor(y)
+
+  for _, enemy in ipairs(self.enemies) do
+    if enemy.x == x and enemy.y == y and enemy.z == z then
+      return enemy
+    end
+  end
+
+  return nil
+end
+
 
 -- exporting
 return Mission
