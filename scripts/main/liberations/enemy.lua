@@ -18,7 +18,7 @@ local name_to_enemy = {
 }
 
 function Enemy.from(instance, position, direction, name)
-  if instance:get_panel_at(position.x, position.y).data.gid == instance.DARK_HOLE_PANEL_GID then
+  if instance:get_panel_at(position.x, position.y, position.z).data.gid == instance.DARK_HOLE_PANEL_GID then
     -- push the enemy out of the dark hole
     position = EnemyHelpers.offset_position_with_direction(position, direction)
   end
@@ -47,7 +47,12 @@ function Enemy.destroy(instance, enemy)
     local slide_time = .2
     local hold_time = 2
 
+    local lock_tracker = {}
+
     for _, player in ipairs(instance.players) do
+      lock_tracker[player.id] = Net.is_player_input_locked(player.id)
+      Net.lock_player_input(player.id)
+
       Net.slide_player_camera(player.id, enemy.x + .5, enemy.y + .5, enemy.z, slide_time)
       Net.move_player_camera(player.id, enemy.x + .5, enemy.y + .5, enemy.z, hold_time)
 
@@ -88,6 +93,14 @@ function Enemy.destroy(instance, enemy)
     local unlock_padding = .3
 
     Async.await(Async.sleep(slide_time + unlock_padding))
+
+
+    -- unlock players who were not locked
+    for _, player in ipairs(instance.players) do
+      if not lock_tracker[player.id] then
+        Net.unlock_player_input(player.id)
+      end
+    end
   end)
 
   return Async.promisify(co)
