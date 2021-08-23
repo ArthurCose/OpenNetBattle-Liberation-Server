@@ -36,7 +36,7 @@ function BlizzardMan:spawn(direction)
 end
 
 function BlizzardMan:get_death_message()
-  return "Woosh!\nI can't believe\n it. I can't lose.\nNOOOO!"
+  return "Woosh!\nI can't believe\nit. I can't lose.\nNOOOO!"
 end
 
 function BlizzardMan:take_turn()
