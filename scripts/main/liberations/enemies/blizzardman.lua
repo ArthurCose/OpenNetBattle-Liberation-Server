@@ -9,8 +9,10 @@ function BlizzardMan:new(instance, position, direction)
     x = math.floor(position.x),
     y = math.floor(position.y),
     z = math.floor(position.z),
-    mug_texture_path = "/server/assets/mugs/blizzardman.png",
-    mug_animation_path = "/server/assets/mugs/blizzardman.animation",
+    mug = {
+      texture_path = "/server/assets/mugs/blizzardman.png",
+      animation_path = "/server/assets/mugs/blizzardman.animation",
+    }
   }
 
   setmetatable(blizzardman, self)
@@ -33,14 +35,18 @@ function BlizzardMan:spawn(direction)
   })
 end
 
+function BlizzardMan:get_death_message()
+  return "Woosh!\nI can't believe\n it. I can't lose.\nNOOOO!"
+end
+
 function BlizzardMan:take_turn()
   local co = coroutine.create(function()
     if self.instance.phase == 1 then
       for _, player in ipairs(self.instance.players) do
         player:message(
           "I'll turn this area into a Nebula ski resort! Got it?",
-          self.mug_texture_path,
-          self.mug_animation_path
+          self.mug.texture_path,
+          self.mug.animation_path
         )
       end
 

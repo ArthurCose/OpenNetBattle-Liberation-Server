@@ -96,7 +96,8 @@ local function liberate_panel(self, player_session)
 
       Async.await(player_session:liberate_panels(panels))
 
-      -- todo: delete spawned monster
+      -- destroy any spawned enemies
+      Async.await(Enemy.destroy(self, panel.enemy))
 
       self.dark_hole_count = self.dark_hole_count - 1
 
@@ -129,7 +130,7 @@ local function take_enemy_turn(self)
   local co = coroutine.create(function()
     for _, enemy in ipairs(self.enemies) do
       for _, player in ipairs(self.players) do
-        Net.slide_player_camera(player.id, enemy.x, enemy.y, enemy.z, slide_time)
+        Net.slide_player_camera(player.id, enemy.x + .5, enemy.y + .5, enemy.z, slide_time)
       end
 
       -- wait until the camera is done moving
@@ -260,6 +261,7 @@ function Mission:new(base_area_id, new_area_id, players)
         }
 
         local enemy = Enemy.from(mission, position, direction, name)
+        object.enemy = enemy
 
         mission.enemies[#mission.enemies + 1] = enemy -- make the boss the first enemy in the list
       end

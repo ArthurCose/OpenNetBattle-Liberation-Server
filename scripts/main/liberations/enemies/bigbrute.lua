@@ -41,6 +41,10 @@ function BigBrute:spawn(direction)
   })
 end
 
+function BigBrute:get_death_message()
+  return "Gyaaaaahh!!"
+end
+
 function BigBrute:take_turn()
   local co = coroutine.create(function()
     self.selection:move(self, Net.get_bot_direction(self.id))
