@@ -36,7 +36,7 @@ function handle_tile_interaction(player_id, x, y, z, button)
 
     player:quiz("Leave party", "Close").and_then(function(response)
       if response == 0 then
-        Parties.leave(player_id)
+        leave_party(player)
       end
     end)
   elseif instances[area_id] ~= nil then
@@ -118,13 +118,11 @@ function handle_textbox_response(player_id, response)
 end
 
 function start_game_for_player(map, player_id)
-  local party_info = Parties.find(player_id)
+  local party = Parties.find(player_id)
 
-  if party_info == nil then
+  if party == nil then
     transfer_players_to_new_instance(map, { player_id })
   else
-    local party = Parties.get(party_info.party_index)
-
     if party.playing == false then
       party.playing = true
       transfer_players_to_new_instance(map, party.members)
@@ -182,8 +180,27 @@ function handle_player_disconnect(player_id)
     player.activity:handle_player_disconnect(player_id)
   end
 
-  Parties.leave(player_id)
+  leave_party(player)
   players[player_id] = nil
+end
+
+function leave_party(player)
+  local party = Parties.find(player.id)
+
+  Parties.leave(player.id)
+
+  -- let everyone know you left
+  local name = Net.get_player_name(player.id)
+
+  for _, member_id in ipairs(party.members) do
+    local member = players[member_id]
+    member:message(name .. " has left your party")
+  end
+
+  if #party.members == 1 then
+    local last_member = players[party.members[1]]
+    last_member:message("Party disbanded!")
+  end
 end
 
 function remove_instance(area_id)
@@ -194,10 +211,10 @@ function remove_instance(area_id)
 
     -- could possibly do this once
     -- but race conditions (player left party/joined diff party but was still sent with group) may be possible lol
-    local party_info = Parties.find(player.id)
+    local party = Parties.find(player.id)
 
-    if party_info ~= nil then
-      Parties.get(party_info.party_index).playing = false
+    if party ~= nil then
+      party.playing = false
     end
 
     player.activity = nil

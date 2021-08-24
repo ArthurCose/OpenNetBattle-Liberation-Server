@@ -8,29 +8,7 @@ local tick_timer = 0
 local REQUEST_EMOTE = Emotes.QUESTION
 local ACCEPT_EMOTE = Emotes.HAPPY
 
-function Parties.get(party_index)
-  return parties[party_index]
-end
-
-function Parties.is_in_same_party(player_a, player_b)
-  local party_info = Parties.find(player_a)
-
-  if party_info == nil then
-    return nil
-  end
-
-  local party = Parties.get(party_info.party_index)
-
-  for i, member_id in ipairs(party.members) do
-    if member_id == player_b then
-      return true
-    end
-  end
-
-  return false
-end
-
-function Parties.find(player_id)
+local function internal_find(player_id)
   for party_index, party in ipairs(parties) do
     for i, member_id in ipairs(party.members) do
       if player_id == member_id then
@@ -43,6 +21,34 @@ function Parties.find(player_id)
   end
 
   return nil
+end
+
+function Parties.find(player_id)
+  local party_info = internal_find(player_id)
+
+  if party_info then
+    return parties[party_info.party_index]
+  end
+
+  return nil
+end
+
+function Parties.is_in_same_party(player_a, player_b)
+  local party_info = internal_find(player_a)
+
+  if party_info == nil then
+    return nil
+  end
+
+  local party = parties[party_info.party_index]
+
+  for _, member_id in ipairs(party.members) do
+    if member_id == player_b then
+      return true
+    end
+  end
+
+  return false
 end
 
 function Parties.tick(elapsed)
@@ -100,7 +106,7 @@ function Parties.accept(request_index)
   Net.exclusive_player_emote(request.requester, request.requester, ACCEPT_EMOTE)
 
   -- leave existing party to join the new one
-  local party_info = Parties.find(request.requester)
+  local party_info = internal_find(request.requester)
 
   Parties.leave(request.recruit)
 
@@ -113,31 +119,24 @@ function Parties.accept(request_index)
       playing = false
     }
   else
-    local party = Parties.get(party_info.party_index)
+    local party = parties[party_info.party_index]
     party.members[#party_info.members + 1] = request.recruit
   end
 end
 
 function Parties.leave(player_id)
-  local party_info = Parties.find(player_id)
+  local party_info = internal_find(player_id)
 
   if party_info == nil then
     return
   end
 
-  local party = Parties.get(party_info.party_index)
+  local party = parties[party_info.party_index]
 
   -- find a party we may be in and leave it
   table.remove(party.members, party_info.player_index)
 
-  local name = Net.get_player_name(player_id)
-
-  for i, member_id in ipairs(party.members) do
-    Net.message_player(member_id, name .. " has left your party")
-  end
-
   if #party.members == 1 then
-    Net.message_player(party.members[1], "Party disbanded!")
     table.remove(parties, party_info.party_index)
   end
 end
