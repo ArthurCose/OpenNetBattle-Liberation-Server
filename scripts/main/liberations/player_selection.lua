@@ -4,26 +4,10 @@ local Direction = require("scripts/libs/direction")
 -- private functions
 
 local function resolve_selection_direction(player_pos, panel_object)
-  -- resolving selection direction, can't use the Direction helper lib for this
-  -- as we only allow for diagonal directions
   local x_diff = panel_object.x + panel_object.height / 2 - player_pos.x
   local y_diff = panel_object.y + panel_object.height / 2 - player_pos.y
 
-  if math.abs(x_diff) > math.abs(y_diff) then
-    -- x axis direction
-    if x_diff < 0 then
-      return Direction.UP_LEFT
-    else
-      return Direction.DOWN_RIGHT
-    end
-  else
-    -- y axis direction
-    if y_diff < 0 then
-      return Direction.UP_RIGHT
-    else
-      return Direction.DOWN_LEFT
-    end
-  end
+  return Direction.diagonal_from_offset(x_diff, y_diff)
 end
 
 -- public
