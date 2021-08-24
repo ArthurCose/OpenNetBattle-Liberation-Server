@@ -4,7 +4,6 @@ function BlizzardMan:new(instance, position, direction)
   local blizzardman = {
     instance = instance,
     id = nil,
-    is_boss = true,
     health = 400,
     x = math.floor(position.x),
     y = math.floor(position.y),
@@ -29,6 +28,7 @@ function BlizzardMan:spawn(direction)
     animation_path = "/server/assets/bots/blizzardman.animation",
     area_id = self.instance.area_id,
     direction = direction,
+    warp_in = false,
     x = self.x + .5,
     y = self.y + .5,
     z = self.z

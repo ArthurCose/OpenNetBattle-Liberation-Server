@@ -35,6 +35,7 @@ function BigBrute:spawn(direction)
     animation_path = "/server/assets/bots/bigbrute.animation",
     area_id = self.instance.area_id,
     direction = direction,
+    warp_in = false,
     x = self.x + .5,
     y = self.y + .5,
     z = self.z

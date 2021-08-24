@@ -1,5 +1,6 @@
 local PlayerSession = require("scripts/main/liberations/player_session")
 local Enemy = require("scripts/main/liberations/enemy")
+local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local Loot = require("scripts/main/liberations/loot")
 
 local debug = true
@@ -99,9 +100,7 @@ local function liberate_panel(self, player_session)
       -- destroy any spawned enemies
       Async.await(Enemy.destroy(self, panel.enemy))
 
-      self.dark_hole_count = self.dark_hole_count - 1
-
-      if self.dark_hole_count == 0 then
+      if #self.dark_holes then
         convert_indestructible_panels(self)
       end
 
@@ -148,8 +147,69 @@ local function take_enemy_turn(self)
       Async.await(Async.sleep(hold_time))
     end
 
+    -- dark holes!
+    for _, dark_hole in ipairs(self.dark_holes) do
+      -- see if we need to spawn a new enemy
+      if Enemy.is_alive(dark_hole.enemy) then
+        goto continue
+      end
+
+      -- find an available space
+      -- todo: move out of func
+      local neighbor_offsets = {
+        { 1, -1 },
+        { 1, 0 },
+        { 1, 1 },
+        { -1, -1 },
+        { -1, 0 },
+        { -1, 1 },
+        { 0, 1 },
+        { 0, -1 },
+      }
+
+      local neighbors = {}
+
+      for i, neighbor_offset in ipairs(neighbor_offsets) do
+        neighbors[i] = self:get_panel_at(dark_hole.x + neighbor_offset[1], dark_hole.y + neighbor_offset[2], dark_hole.z)
+      end
+
+      if #neighbors == 0 then
+        -- no available spaces
+        goto continue
+      end
+
+      -- pick a neighbor to be the destination
+      local destination = neighbors[math.random(#neighbors)]
+
+      -- move the camera here
+      for _, player in ipairs(self.players) do
+        Net.slide_player_camera(player.id, dark_hole.x + .5, dark_hole.y + .5, dark_hole.z, slide_time)
+      end
+
+      -- wait until the camera is done moving
+      Async.await(Async.sleep(slide_time))
+
+      -- spawn a new enemy
+      local name = dark_hole.custom_properties.Spawns
+      local direction = dark_hole.custom_properties.Direction
+      dark_hole.enemy = Enemy.from(self, dark_hole, direction, name)
+      self.enemies[#self.enemies+1] = dark_hole.enemy
+
+      -- Let people admire the enemy
+      local admire_time = .5
+      Async.await(Async.sleep(admire_time))
+
+      -- move them out
+      Async.await(EnemyHelpers.move(self, dark_hole.enemy, destination.x, destination.y, destination.z))
+
+      -- Needs more admiration
+      Async.await(Async.sleep(admire_time))
+
+      ::continue::
+    end
+
     -- completed turn, return camera to players
-    for i, player in pairs(self.players) do
+    for _, player in pairs(self.players) do
       local player_pos = Net.get_player_position(player.id)
       Net.slide_player_camera(player.id, player_pos.x, player_pos.y, player_pos.z, slide_time)
       Net.unlock_player_camera(player.id)
@@ -196,7 +256,7 @@ function Mission:new(base_area_id, new_area_id, players)
     boss = nil,
     enemies = {},
     panels = {},
-    dark_hole_count = 0,
+    dark_holes = {},
     indestructible_panels = {},
     FIRST_PANEL_GID = FIRST_PANEL_GID,
     BASIC_PANEL_GID = FIRST_PANEL_GID,
@@ -234,7 +294,7 @@ function Mission:new(base_area_id, new_area_id, players)
         object.loot = Loot.DEFAULT_POOL[math.random(#Loot.DEFAULT_POOL)]
       elseif object.data.gid == mission.DARK_HOLE_PANEL_GID then
         -- track dark holes for converting indestructible panels
-        mission.dark_hole_count = mission.dark_hole_count + 1
+        mission.dark_holes[#mission.dark_holes+1] = object
       elseif object.data.gid == mission.INDESTRUCTIBLE_PANEL_GID then
         -- track indestructible panels for conversion
         mission.indestructible_panels[#mission.indestructible_panels+1] = object
@@ -265,6 +325,8 @@ function Mission:new(base_area_id, new_area_id, players)
           y = object.y,
           z = object.z
         }
+
+        position = EnemyHelpers.offset_position_with_direction(position, direction)
 
         local enemy = Enemy.from(mission, position, direction, name)
         object.enemy = enemy
@@ -556,9 +618,20 @@ function Mission:remove_panel(panel)
 
   local x = math.floor(panel.x) + 1
 
-  if row[x] ~= nil then
-    Net.remove_object(self.area_id, panel.id)
-    row[x] = nil
+  if row[x] == nil then
+    return
+  end
+
+  Net.remove_object(self.area_id, panel.id)
+  row[x] = nil
+
+  if panel.data.gid == self.DARK_HOLE_PANEL_GID then
+    for i, dark_hole in ipairs(self.dark_holes) do
+      if panel == dark_hole then
+        table.remove(self.dark_holes, i)
+        break
+      end
+    end
   end
 end
 
