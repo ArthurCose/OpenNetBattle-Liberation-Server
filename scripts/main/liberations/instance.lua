@@ -38,19 +38,18 @@ local function convert_indestructible_panels(self)
   for _, player_session in pairs(self.player_sessions) do
     player_session.player:message("No more DarkHoles! Nothing will save the Darkloids now!")
 
-    local player_id = player_session.player.id
+    local player = player_session.player
 
-    Net.lock_player_input(player_id)
+    Net.lock_player_input(player.id)
 
-    Net.slide_player_camera(player_id, self.boss.x, self.boss.y, self.boss.z, slide_time)
+    Net.slide_player_camera(player.id, self.boss.x, self.boss.y, self.boss.z, slide_time)
 
     -- hold the camera
-    Net.move_player_camera(player_id, self.boss.x, self.boss.y, self.boss.z, hold_time)
+    Net.move_player_camera(player.id, self.boss.x, self.boss.y, self.boss.z, hold_time)
 
     -- return the camera
-    local player_pos = Net.get_player_position(player_id)
-    Net.slide_player_camera(player_id, player_pos.x, player_pos.y, player_pos.z, slide_time)
-    Net.unlock_player_camera(player_id)
+    Net.slide_player_camera(player.id, player.x, player.y, player.z, slide_time)
+    Net.unlock_player_camera(player.id)
   end
 
   Async.await(Async.sleep(slide_time + hold_time / 2))
@@ -215,8 +214,7 @@ local function take_enemy_turn(self)
 
     -- completed turn, return camera to players
     for _, player in pairs(self.players) do
-      local player_pos = Net.get_player_position(player.id)
-      Net.slide_player_camera(player.id, player_pos.x, player_pos.y, player_pos.z, slide_time)
+      Net.slide_player_camera(player.id, player.x, player.y, player.z, slide_time)
       Net.unlock_player_camera(player.id)
     end
 
@@ -452,9 +450,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
     return
   end
 
-  local player_position = Net.get_player_position(player_id)
-
-  if not is_adjacent(player_position, object) then
+  if not is_adjacent(player_session.player, object) then
     -- can't select panels diagonally
     return
   end

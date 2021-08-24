@@ -69,7 +69,7 @@ function BigBrute:take_turn()
     local spawned_bots = {}
 
     for _, player_session in ipairs(caught_sessions) do
-      local position = Net.get_player_position(player_session.player.id)
+      local player = player_session.player
 
       spawned_bots[#spawned_bots+1] = Net.create_bot({
         texture_path = "/server/assets/bots/beast breath.png",
@@ -77,9 +77,9 @@ function BigBrute:take_turn()
         animation = "ANIMATE",
         area_id = self.instance.area_id,
         warp_in = false,
-        x = position.x + 1 / 32,
-        y = position.y + 1 / 32,
-        z = position.z
+        x = player.x + 1 / 32,
+        y = player.y + 1 / 32,
+        z = player.z
       })
 
       player_session:hurt(20)

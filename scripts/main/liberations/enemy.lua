@@ -62,8 +62,7 @@ function Enemy.destroy(instance, enemy)
       Net.slide_player_camera(player.id, enemy.x + .5, enemy.y + .5, enemy.z, slide_time)
       Net.move_player_camera(player.id, enemy.x + .5, enemy.y + .5, enemy.z, hold_time)
 
-      local player_pos = Net.get_player_position(player.id)
-      Net.slide_player_camera(player.id, player_pos.x, player_pos.y, player_pos.z, slide_time)
+      Net.slide_player_camera(player.id, player.x, player.y, player.z, slide_time)
       Net.unlock_player_camera(player.id)
     end
 

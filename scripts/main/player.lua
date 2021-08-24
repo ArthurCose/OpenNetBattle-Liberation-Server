@@ -10,12 +10,17 @@ end
 local Player = {}
 
 function Player:new(player_id)
+  local position = Net.get_player_position(player_id)
+
   local player = {
     id = player_id,
     activity = nil,
     mug = Net.get_player_mugshot(player_id),
     textbox_promise_resolvers = {},
-    avatar_details = nil
+    avatar_details = nil,
+    x = position.x,
+    y = position.y,
+    z = position.z,
   }
 
   setmetatable(player, self)

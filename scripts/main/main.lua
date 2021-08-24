@@ -192,6 +192,14 @@ function handle_actor_interaction(player_id, other_player_id, button)
   end)
 end
 
+function handle_player_move(player_id, x, y, z)
+  local player = players[player_id]
+
+  player.x = x
+  player.y = y
+  player.z = z
+end
+
 function handle_textbox_response(player_id, response)
   local player = players[player_id]
 

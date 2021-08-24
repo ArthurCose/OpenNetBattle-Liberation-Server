@@ -47,9 +47,9 @@ function EnemySelection:detect_player_sessions()
   local sessions = {}
 
   for _, player_session in pairs(self.instance.player_sessions) do
-    local player_pos = Net.get_player_position(player_session.player.id)
+    local player = player_session.player
 
-    if self.selection:is_within(player_pos.x, player_pos.y, player_pos.z) then
+    if self.selection:is_within(player.x, player.y, player.z) then
       sessions[#sessions+1] = player_session
     end
   end
