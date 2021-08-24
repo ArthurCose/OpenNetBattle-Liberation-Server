@@ -415,19 +415,19 @@ function Mission:handle_tile_interaction(player_id, x, y, z, button)
     return
   end
 
+  Net.lock_player_input(player_id)
+
   local quiz_promise = player_session:quiz_with_points("Pass", "Cancel")
 
   quiz_promise.and_then(function(response)
-      if response == 0 then
-        -- Pass
-        player_session:get_pass_turn_permission()
-      else
-        -- Cancel
-        Net.unlock_player_input(player_id)
-      end
-    end)
-
-  return
+    if response == 0 then
+      -- Pass
+      player_session:get_pass_turn_permission()
+    else
+      -- Cancel
+      Net.unlock_player_input(player_id)
+    end
+  end)
 end
 
 function Mission:handle_object_interaction(player_id, object_id, button)
@@ -480,14 +480,14 @@ function Mission:handle_object_interaction(player_id, object_id, button)
     local quiz_promise = player_session:quiz_with_points("Pass", "Cancel")
 
     quiz_promise.and_then(function(response)
-        if response == 0 then
-          -- Pass
-          player_session:get_pass_turn_permission()
-        else
-          -- Cancel
-          Net.unlock_player_input(player_id)
-        end
-      end)
+      if response == 0 then
+        -- Pass
+        player_session:get_pass_turn_permission()
+      else
+        -- Cancel
+        Net.unlock_player_input(player_id)
+      end
+    end)
 
     return
   end
