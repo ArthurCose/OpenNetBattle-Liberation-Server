@@ -112,6 +112,7 @@ end
 
 function PlayerSelection:clear()
   self.selection:remove_indicators()
+  self.root_panel = nil
 end
 
 function PlayerSelection:count_panels()

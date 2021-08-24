@@ -468,7 +468,16 @@ function Mission:handle_object_interaction(player_id, object_id, button)
 
   Net.lock_player_input(player_id)
 
-  local can_liberate = (
+  local panel_already_selected = false
+
+  for _, player_session in pairs(self.player_sessions) do
+    if player_session.selection.root_panel == panel then
+      panel_already_selected = true
+      break
+    end
+  end
+
+  local can_liberate = not panel_already_selected and (
     panel.data.gid == self.BASIC_PANEL_GID or
     panel.data.gid == self.ITEM_PANEL_GID or
     panel.data.gid == self.DARK_HOLE_PANEL_GID or

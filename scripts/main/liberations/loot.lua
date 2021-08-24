@@ -255,12 +255,17 @@ function Loot.loot_item_panel(instance, player_session, panel)
     slide_time
   )
 
+  local loot = panel.loot
+
+  -- prevent other players from looting this panel again
+  panel.loot = nil
+
   local co = coroutine.create(function()
     Async.await(Async.sleep(slide_time))
 
-    local remove_item_bot = Async.await(Loot.spawn_item_bot(panel.loot, instance.area_id, spawn_x, spawn_y, spawn_z))
+    local remove_item_bot = Async.await(Loot.spawn_item_bot(loot, instance.area_id, spawn_x, spawn_y, spawn_z))
 
-    Async.await(panel.loot.activate(instance, player_session))
+    Async.await(loot.activate(instance, player_session))
 
     remove_item_bot()
   end)
