@@ -134,6 +134,26 @@ function PlayerSession:pass_turn()
   self:complete_turn()
 end
 
+function PlayerSession:complete_turn()
+  self.completed_turn = true
+  self.selection:clear()
+  Net.lock_player_input(self.player.id)
+
+  self:emote_state()
+
+  self.instance.ready_count = self.instance.ready_count + 1
+
+  if self.instance.ready_count < #self.instance.players then
+    Net.unlock_player_camera(self.player.id)
+  end
+end
+
+function PlayerSession:give_turn()
+  self.completed_turn = false
+  self.invincible = false
+  Net.unlock_player_input(self.player.id)
+end
+
 function PlayerSession:liberate_panels(panels)
   local co = coroutine.create(function()
     -- allow time for the player to see the liberation range
@@ -171,26 +191,6 @@ function PlayerSession:liberate_and_loot_panels(panels)
       self:loot_panels(panels).and_then(resolve)
     end)
   end)
-end
-
-function PlayerSession:complete_turn()
-  self.completed_turn = true
-  self.selection:clear()
-  Net.lock_player_input(self.player.id)
-
-  self:emote_state()
-
-  self.instance.ready_count = self.instance.ready_count + 1
-
-  if self.instance.ready_count < #self.instance.players then
-    Net.unlock_player_camera(self.player.id)
-  end
-end
-
-function PlayerSession:give_turn()
-  self.completed_turn = false
-  self.invincible = false
-  Net.unlock_player_input(self.player.id)
 end
 
 function PlayerSession:handle_disconnect()
