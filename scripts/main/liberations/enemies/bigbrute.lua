@@ -1,5 +1,9 @@
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local EnemySelection = require("scripts/main/liberations/enemy_selection")
+local Preloader = require("scripts/main/liberations/preloader")
+
+Preloader.add_asset("/server/assets/bots/beast breath.png")
+Preloader.add_asset("/server/assets/bots/beast breath.animation")
 
 local BigBrute = {}
 

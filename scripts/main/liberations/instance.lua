@@ -2,6 +2,7 @@ local PlayerSession = require("scripts/main/liberations/player_session")
 local Enemy = require("scripts/main/liberations/enemy")
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local Loot = require("scripts/main/liberations/loot")
+local Preloader = require("scripts/main/liberations/preloader")
 
 local debug = true
 
@@ -281,6 +282,7 @@ function Mission:new(base_area_id, new_area_id, players)
   self.__index = self
 
   Net.clone_area(base_area_id, new_area_id)
+  Preloader.update(new_area_id)
 
   local object_ids = Net.list_objects(mission.area_id)
 
