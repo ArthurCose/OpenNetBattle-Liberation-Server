@@ -28,11 +28,22 @@ function Enemy.is_alive(enemy)
 end
 
 function Enemy.destroy(instance, enemy)
-  local co = coroutine.create(function()
-    if not Enemy.is_alive(enemy) then
-      -- already died
-      return
+  if not Enemy.is_alive(enemy) then
+    -- already died
+    return Async.create_promise(function(resolve)
+      resolve()
+    end)
+  end
+
+  -- remove from the instance
+  for i, stored_enemy in pairs(instance.enemies) do
+    if enemy == stored_enemy then
+      table.remove(instance.enemies, i)
+      break
     end
+  end
+
+  local co = coroutine.create(function()
 
     -- begin exploding the enemy
     local explosions = ExplodingEffect:new(enemy.id)
@@ -67,14 +78,6 @@ function Enemy.destroy(instance, enemy)
     end
 
     Async.await(Async.sleep(hold_time))
-
-    -- remove from the instance
-    for i, stored_enemy in pairs(instance.enemies) do
-      if enemy == stored_enemy then
-        table.remove(instance.enemies, i)
-        break
-      end
-    end
 
     -- remove from the server
     Net.remove_bot(enemy.id)
