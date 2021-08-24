@@ -101,7 +101,7 @@ local function liberate_panel(self, player_session)
       -- destroy any spawned enemies
       Async.await(Enemy.destroy(self, panel.enemy))
 
-      if #self.dark_holes then
+      if #self.dark_holes == 0 then
         convert_indestructible_panels(self)
       end
 
