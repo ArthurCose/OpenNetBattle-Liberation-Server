@@ -10,6 +10,100 @@ local instances = {}
 local door = Net.get_object_by_name(waiting_area, "Door")
 local players = {}
 
+
+local function transfer_players_to_new_instance(base_area, player_ids)
+  local instance_id = player_ids[1]
+  local instance_players = {}
+
+  for _, player_id in ipairs(player_ids) do
+    instance_players[#instance_players+1] = players[player_id]
+  end
+
+  local instance = Instance:new(base_area, instance_id, instance_players)
+  local spawn = instance:get_spawn_position()
+
+  for _, player in ipairs(instance_players) do
+    Net.transfer_player(player.id, instance_id, true, spawn.x, spawn.y, spawn.z)
+    player.activity = instance
+  end
+
+  instance:begin()
+
+  instances[instance_id] = instance
+end
+
+local function start_game_for_player(map, player_id)
+  local party = Parties.find(player_id)
+
+  if party == nil then
+    transfer_players_to_new_instance(map, { player_id })
+  else
+    if party.playing == false then
+      party.playing = true
+      transfer_players_to_new_instance(map, party.members)
+    end
+  end
+end
+
+local function detect_door_interaction(player_id, object_id, button)
+  if button ~= 0 then return end
+  if object_id ~= door.id then return end
+
+  local player = players[player_id]
+
+  player:question_with_mug("Start mission?").and_then(function(response)
+    if response == 1 then
+      start_game_for_player("acdc3", player_id)
+    end
+  end)
+end
+
+local function leave_party(player)
+  local party = Parties.find(player.id)
+
+  if not party then
+    return
+  end
+
+  Parties.leave(player.id)
+
+  -- let everyone know you left
+  local name = Net.get_player_name(player.id)
+
+  for _, member_id in ipairs(party.members) do
+    local member = players[member_id]
+    member:message(name .. " has left your party")
+  end
+
+  if #party.members == 1 then
+    local last_member = players[party.members[1]]
+    last_member:message("Party disbanded!")
+  end
+end
+
+local function remove_instance(area_id)
+  local instance = instances[area_id]
+
+  for _, player in ipairs(instance:get_players()) do
+    Net.transfer_player(player.id, waiting_area, true)
+
+    -- could possibly do this once
+    -- but race conditions (player left party/joined diff party but was still sent with group) may be possible lol
+    local party = Parties.find(player.id)
+
+    if party ~= nil then
+      party.playing = false
+    end
+
+    player.activity = nil
+  end
+
+  instance:clean_up()
+
+  instances[area_id] = nil
+end
+
+-- handlers
 function tick(elapsed)
   Parties.tick(elapsed)
 
@@ -98,57 +192,10 @@ function handle_actor_interaction(player_id, other_player_id, button)
   end)
 end
 
-function detect_door_interaction(player_id, object_id, button)
-  if button ~= 0 then return end
-  if object_id ~= door.id then return end
-
-  local player = players[player_id]
-
-  player:question_with_mug("Start mission?").and_then(function(response)
-    if response == 1 then
-      start_game_for_player("acdc3", player_id)
-    end
-  end)
-end
-
 function handle_textbox_response(player_id, response)
   local player = players[player_id]
 
   player:handle_textbox_response(response)
-end
-
-function start_game_for_player(map, player_id)
-  local party = Parties.find(player_id)
-
-  if party == nil then
-    transfer_players_to_new_instance(map, { player_id })
-  else
-    if party.playing == false then
-      party.playing = true
-      transfer_players_to_new_instance(map, party.members)
-    end
-  end
-end
-
-function transfer_players_to_new_instance(base_area, player_ids)
-  local instance_id = player_ids[1]
-  local instance_players = {}
-
-  for _, player_id in ipairs(player_ids) do
-    instance_players[#instance_players+1] = players[player_id]
-  end
-
-  local instance = Instance:new(base_area, instance_id, instance_players)
-  local spawn = instance:get_spawn_position()
-
-  for _, player in ipairs(instance_players) do
-    Net.transfer_player(player.id, instance_id, true, spawn.x, spawn.y, spawn.z)
-    player.activity = instance
-  end
-
-  instance:begin()
-
-  instances[instance_id] = instance
 end
 
 function handle_player_avatar_change(player_id, details)
@@ -182,45 +229,4 @@ function handle_player_disconnect(player_id)
 
   leave_party(player)
   players[player_id] = nil
-end
-
-function leave_party(player)
-  local party = Parties.find(player.id)
-
-  Parties.leave(player.id)
-
-  -- let everyone know you left
-  local name = Net.get_player_name(player.id)
-
-  for _, member_id in ipairs(party.members) do
-    local member = players[member_id]
-    member:message(name .. " has left your party")
-  end
-
-  if #party.members == 1 then
-    local last_member = players[party.members[1]]
-    last_member:message("Party disbanded!")
-  end
-end
-
-function remove_instance(area_id)
-  local instance = instances[area_id]
-
-  for _, player in ipairs(instance:get_players()) do
-    Net.transfer_player(player.id, waiting_area, true)
-
-    -- could possibly do this once
-    -- but race conditions (player left party/joined diff party but was still sent with group) may be possible lol
-    local party = Parties.find(player.id)
-
-    if party ~= nil then
-      party.playing = false
-    end
-
-    player.activity = nil
-  end
-
-  instance:clean_up()
-
-  instances[area_id] = nil
 end
