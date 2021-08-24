@@ -1,6 +1,7 @@
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local EnemySelection = require("scripts/main/liberations/enemy_selection")
 local Preloader = require("scripts/main/liberations/preloader")
+local Direction = require("scripts/libs/direction")
 
 Preloader.add_asset("/server/assets/bots/beast breath.png")
 Preloader.add_asset("/server/assets/bots/beast breath.animation")
@@ -50,7 +51,96 @@ function BigBrute:get_death_message()
   return "Gyaaaaahh!!"
 end
 
-function BigBrute:take_turn()
+
+local function sign(a)
+  if a < 0 then
+    return -1
+  end
+
+  return 1
+end
+
+local function find_offset(self, xstep, ystep, limit)
+  local offset = 0
+
+  for i = 1, limit, 1 do
+    if not EnemyHelpers.can_move_to(self.instance, self.x + xstep * i, self.y + ystep * i, self.z) then
+      break
+    end
+
+    offset = (xstep + ystep) * i
+  end
+
+  return offset
+end
+
+local function attempt_axis_move(self, player, diff, xfilter, yfilter)
+  return Async.create_promise(function(resolve)
+    local step = sign(diff)
+    local limit = math.min(math.abs(diff), 2)
+    local offset = find_offset(self, step * xfilter, step * yfilter, limit)
+
+    if offset == 0 then
+      resolve(false)
+      return
+    end
+
+    local targetx = self.x + offset * xfilter
+    local targety = self.y + offset * yfilter
+
+    EnemyHelpers.face_position(self, targetx + .5, targety + .5)
+
+    local target_direction = Direction.diagonal_from_offset(
+      player.x - (targetx + .5),
+      player.y - (targety + .5)
+    )
+
+    EnemyHelpers.move(self.instance, self, targetx, targety, self.z, target_direction).and_then(function()
+      resolve(true)
+    end)
+  end)
+end
+
+local function attempt_move(self)
+  local co = coroutine.create(function()
+    local closest_session = EnemyHelpers.find_closest_player_session(self.instance, self)
+
+    if not closest_session then
+      -- all players left
+      return
+    end
+
+    local player = closest_session.player
+
+    local distance = EnemyHelpers.chebyshev_tile_distance(self, player.x, player.y)
+
+    if distance > 4 then
+      -- too far to target
+      return
+    end
+
+    local xdiff = math.floor(player.x) - self.x
+    local ydiff = math.floor(player.y) - self.y
+
+    if math.abs(xdiff) < math.abs(ydiff) and xdiff ~= 0 then
+      -- travel along the x axis
+      if not Async.await(attempt_axis_move(self, player, xdiff, 1, 0)) then
+        -- failed, try the other axis
+        Async.await(attempt_axis_move(self, player, ydiff, 0, 1))
+      end
+    elseif ydiff ~= 0 then
+      -- travel along the y axis
+      if not Async.await(attempt_axis_move(self, player, ydiff, 0, 1)) then
+        -- failed, try the other axis
+        Async.await(attempt_axis_move(self, player, xdiff, 1, 0))
+      end
+    end
+  end)
+
+  return Async.promisify(co)
+end
+
+local function attempt_attack(self)
   local co = coroutine.create(function()
     self.selection:move(self, Net.get_bot_direction(self.id))
 
@@ -59,6 +149,9 @@ function BigBrute:take_turn()
     if #caught_sessions == 0 then
       return
     end
+
+    local closest_session = EnemyHelpers.find_closest_player_session(self.instance, self)
+    EnemyHelpers.face_position(self, closest_session.player.x, closest_session.player.y)
 
     self.selection:indicate()
 
@@ -103,6 +196,14 @@ function BigBrute:take_turn()
   end)
 
   return Async.promisify(co)
+end
+
+function BigBrute:take_turn()
+  return Async.create_promise(function(resolve)
+    attempt_move(self).and_then(function()
+      attempt_attack(self).and_then(resolve)
+    end)
+  end)
 end
 
 return BigBrute

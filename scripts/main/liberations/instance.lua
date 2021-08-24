@@ -157,14 +157,14 @@ local function take_enemy_turn(self)
       -- find an available space
       -- todo: move out of func
       local neighbor_offsets = {
-        { 1, -1 },
-        { 1, 0 },
-        { 1, 1 },
-        { -1, -1 },
-        { -1, 0 },
-        { -1, 1 },
+        -- { 1, -1 },
+        -- { 1, 0 },
+        -- { 1, 1 },
+        -- { -1, -1 },
+        -- { -1, 0 },
+        -- { -1, 1 },
         { 0, 1 },
-        { 0, -1 },
+        -- { 0, -1 },
       }
 
       local neighbors = {}

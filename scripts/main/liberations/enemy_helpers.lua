@@ -18,8 +18,25 @@ function EnemyHelpers.play_attack_animation(enemy)
   Net.animate_bot(enemy.id, animation)
 end
 
+function EnemyHelpers.face_position(enemy, x, y)
+  x = x - (enemy.x + .5)
+  y = y - (enemy.y + .5)
+
+  Net.set_bot_direction(enemy.id, Direction.diagonal_from_offset(x, y))
+end
+
+function EnemyHelpers.can_move_to(instance, x, y, z)
+  local panel = instance:get_panel_at(x, y, z)
+
+  return panel and (
+    panel.data.gid == instance.BASIC_PANEL_GID or
+    panel.data.gid == instance.ITEM_PANEL_GID
+  )
+end
+
 -- takes instance to move player cameras
-function EnemyHelpers.move(instance, enemy, x, y, z)
+-- x, y, z should be floored
+function EnemyHelpers.move(instance, enemy, x, y, z, direction)
   x = math.floor(x)
   y = math.floor(y)
 
@@ -72,6 +89,10 @@ function EnemyHelpers.move(instance, enemy, x, y, z)
 
     Async.await(Async.sleep(animation_time))
 
+    if direction then
+      Net.set_bot_direction(enemy.id, direction)
+    end
+
     -- move the enemy
     Net.transfer_bot(enemy.id, area_id, false, x + .5, y + .5, z)
 
@@ -106,6 +127,37 @@ function EnemyHelpers.offset_position_with_direction(position, direction)
   end
 
   return position
+end
+
+function EnemyHelpers.chebyshev_tile_distance(enemy, x, y)
+  local xdiff = math.abs(enemy.x - math.floor(x))
+  local ydiff = math.abs(enemy.y - math.floor(y))
+  return math.max(xdiff, ydiff)
+end
+
+-- uses chebyshev_tile_distance
+function EnemyHelpers.find_closest_player_session(instance, enemy)
+  local closest_session
+  local closest_distance = math.huge
+
+  for _, player_session in pairs(instance.player_sessions) do
+    local player = player_session.player
+
+    if player.z ~= enemy.z then
+      goto continue
+    end
+
+    local distance = EnemyHelpers.chebyshev_tile_distance(enemy, player.x, player.y)
+
+    if distance < closest_distance then
+      closest_distance = distance
+      closest_session = player_session
+    end
+
+    ::continue::
+  end
+
+  return closest_session
 end
 
 return EnemyHelpers
