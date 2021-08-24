@@ -50,7 +50,8 @@ function Enemy.destroy(instance, enemy)
 
     -- moving every player's camera to the enemy
     local slide_time = .2
-    local hold_time = 2
+    local hold_time = 3
+    local extra_explosion_time = .5
 
     local lock_tracker = {}
 
@@ -77,10 +78,12 @@ function Enemy.destroy(instance, enemy)
       player:message(message, texture_path, animation_path)
     end
 
-    Async.await(Async.sleep(hold_time))
+    Async.await(Async.sleep(hold_time - extra_explosion_time))
 
     -- remove from the server
     Net.remove_bot(enemy.id)
+
+    Async.await(Async.sleep(extra_explosion_time))
 
     -- stop explosions
     explosions:remove()
