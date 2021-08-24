@@ -26,7 +26,7 @@ function EnemyHelpers.move(instance, enemy, x, y, z)
   local slide_time = .5
   local hold_time = .25
   local startup_time = .25
-  local animation_time = .04
+  local animation_time = .042
 
   local co = coroutine.create(function()
     Async.await(Async.sleep(hold_time))
@@ -36,25 +36,54 @@ function EnemyHelpers.move(instance, enemy, x, y, z)
     end
 
     local area_id = Net.get_bot_area(enemy.id)
-    local area_width = Net.get_width(area_id)
+
+    -- create blur
+    local blur_bot_id = Net.create_bot({
+      texture_path = "/server/assets/bots/blur.png",
+      animation_path = "/server/assets/bots/blur.animation",
+      area_id = area_id,
+      warp_in = false,
+      x = enemy.x + .5 + (1 / 32),
+      y = enemy.y + .5 + (1 / 32),
+      z = enemy.z + 1
+    })
+
+    -- animate blur
+    Net.animate_bot(blur_bot_id, "DISAPPEAR", false)
+
+    Async.await(Async.sleep(animation_time))
 
     -- move this bot off screen
+    local area_width = Net.get_width(area_id)
     Net.transfer_bot(enemy.id, area_id, false, area_width + 100, 0, 0)
 
     Async.await(Async.sleep(slide_time + startup_time))
 
-    -- todo: movement sprite
+    -- animate blur
+    Net.transfer_bot(
+      blur_bot_id,
+      area_id,
+      false,
+      x + .5 + (1 / 32),
+      y + .5 + (1 / 32),
+      z + 1
+    )
+    Net.animate_bot(blur_bot_id, "APPEAR", false)
 
     Async.await(Async.sleep(animation_time))
 
+    -- move the enemy
     Net.transfer_bot(enemy.id, area_id, false, x + .5, y + .5, z)
 
-    Async.await(Async.sleep(hold_time))
-  end)
+    -- delete the blur bot
+    Net.remove_bot(blur_bot_id)
 
-  enemy.x = x
-  enemy.y = y
-  enemy.z = z
+    Async.await(Async.sleep(hold_time))
+
+    enemy.x = x
+    enemy.y = y
+    enemy.z = z
+  end)
 
   return Async.promisify(co)
 end
