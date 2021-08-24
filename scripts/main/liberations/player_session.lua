@@ -1,6 +1,7 @@
 local Ability = require("scripts/main/liberations/ability")
 local PlayerSelection = require("scripts/main/liberations/player_selection")
 local Loot = require("scripts/main/liberations/loot")
+local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local CustomEmotes = require("scripts/util/custom_emotes")
 local Emotes = require("scripts/libs/emotes")
 
@@ -152,6 +153,28 @@ function PlayerSession:give_turn()
   self.completed_turn = false
   self.invincible = false
   Net.unlock_player_input(self.player.id)
+end
+
+function PlayerSession:find_closest_guardian()
+  local closest_guardian
+  local closest_distance = math.huge
+
+  for _, enemy in ipairs(self.instance.enemies) do
+    if enemy.is_boss then
+      goto continue
+    end
+
+    local distance = EnemyHelpers.chebyshev_tile_distance(enemy, self.player.x, self.player.y)
+
+    if distance < closest_distance then
+      closest_distance = distance
+      closest_guardian = enemy
+    end
+
+    ::continue::
+  end
+
+  return closest_guardian
 end
 
 function PlayerSession:liberate_panels(panels)

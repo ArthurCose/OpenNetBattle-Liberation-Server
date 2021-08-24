@@ -1,3 +1,5 @@
+local Enemy = require("scripts/main/liberations/enemy")
+
 local Loot = {
   HEART = {
     animation = "HEART",
@@ -73,11 +75,20 @@ local Loot = {
   MAJOR_HIT = {
     animation = "MAJOR_HIT",
     activate = function(instance, player_session)
-      return Async.create_promise(function(resolve)
-        player_session.player:message("Damages the closest enemy the most!").and_then(function()
-          resolve()
-        end)
+      local co = coroutine.create(function()
+        Async.await(player_session.player:message("Damages the closest Guardian the most!"))
+
+        local enemy = player_session:find_closest_guardian()
+
+        if not enemy then
+          Async.await(player_session.player:message("No Guardians found"))
+          return
+        end
+
+        Async.await(Enemy.destroy(instance, enemy))
       end)
+
+      return Async.promisify(co)
     end
   },
   KEY = {
@@ -108,7 +119,7 @@ Loot.DEFAULT_POOL = {
 
 Loot.BONUS_POOL = {
   Loot.HEART,
-  Loot.CHIP,
+  -- Loot.CHIP,
   Loot.ORDER_POINT,
   Loot.INVINCIBILITY,
   Loot.MAJOR_HIT,
