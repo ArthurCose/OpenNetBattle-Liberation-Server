@@ -157,14 +157,14 @@ local function take_enemy_turn(self)
       -- find an available space
       -- todo: move out of func
       local neighbor_offsets = {
-        -- { 1, -1 },
-        -- { 1, 0 },
-        -- { 1, 1 },
-        -- { -1, -1 },
-        -- { -1, 0 },
-        -- { -1, 1 },
+        { 1, -1 },
+        { 1, 0 },
+        { 1, 1 },
+        { -1, -1 },
+        { -1, 0 },
+        { -1, 1 },
         { 0, 1 },
-        -- { 0, -1 },
+        { 0, -1 },
       }
 
       local neighbors = {}
@@ -226,6 +226,7 @@ local function take_enemy_turn(self)
       player_session:give_turn()
     end
 
+    self.emote_timer = 0
     self.phase = self.phase + 1
 
     if self.needs_disposal then
@@ -249,6 +250,7 @@ function Mission:new(base_area_id, new_area_id, players)
 
   local mission = {
     area_id = new_area_id,
+    emote_timer = 0,
     phase = 1,
     ready_count = 0,
     order_points = 3,
@@ -397,6 +399,17 @@ function Mission:tick(elapsed)
     self.ready_count = 0
     -- now we can take a turn !
     take_enemy_turn(self)
+  end
+
+  self.emote_timer = self.emote_timer - elapsed
+
+  if self.emote_timer <= 0 then
+    for _, player_session in pairs(self.player_sessions) do
+      player_session:emote_state()
+    end
+
+    -- emote every second
+    self.emote_timer = 1
   end
 end
 

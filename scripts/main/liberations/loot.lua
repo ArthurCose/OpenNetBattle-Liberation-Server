@@ -61,6 +61,10 @@ local Loot = {
     activate = function(instance, player_session)
       return Async.create_promise(function(resolve)
         player_session.player:message("Team becomes invincible for\n 1 phase!!").and_then(function()
+          for _, other_session in pairs(instance.player_sessions) do
+            other_session.invincible = true
+          end
+
           resolve()
         end)
       end)

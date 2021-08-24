@@ -1,6 +1,8 @@
 local Ability = require("scripts/main/liberations/ability")
 local PlayerSelection = require("scripts/main/liberations/player_selection")
 local Loot = require("scripts/main/liberations/loot")
+local CustomEmotes = require("scripts/util/custom_emotes")
+local Emotes = require("scripts/libs/emotes")
 
 local PlayerSession = {}
 
@@ -10,6 +12,8 @@ function PlayerSession:new(instance, player)
     player = player,
     health = 100,
     max_health = 100,
+    battling = false,
+    invincible = false,
     completed_turn = false,
     selection = PlayerSelection:new(instance, player.id),
     ability = Ability.resolve_for_player(player),
@@ -22,6 +26,18 @@ function PlayerSession:new(instance, player)
   Net.set_player_max_health(player.id, player_session.max_health)
 
   return player_session
+end
+
+function PlayerSession:emote_state()
+  if self.invincible then
+    Net.set_player_emote(self.player.id, CustomEmotes.INVINCIBILE, true)
+  elseif self.completed_turn then
+    Net.set_player_emote(self.player.id, Emotes.ZZZ)
+  elseif self.battling then
+    Net.set_player_emote(self.player.id, Emotes.PVP)
+  else
+    Net.set_player_emote(self.player.id, CustomEmotes.BLANK, true)
+  end
 end
 
 local order_points_mug_texture = "/server/assets/mugs/order pts.png"
@@ -103,6 +119,10 @@ function PlayerSession:heal(amount)
 end
 
 function PlayerSession:hurt(amount)
+  if self.invincible then
+    return
+  end
+
   self.health = math.max(math.ceil(self.health - amount), 0)
   Net.set_player_health(self.player.id, self.health)
 end
@@ -145,7 +165,6 @@ function PlayerSession:loot_panels(panels)
   return Async.promisify(co)
 end
 
-
 function PlayerSession:liberate_and_loot_panels(panels)
   return Async.create_promise(function(resolve)
     self:liberate_panels(panels).and_then(function()
@@ -159,6 +178,8 @@ function PlayerSession:complete_turn()
   self.selection:clear()
   Net.lock_player_input(self.player.id)
 
+  self:emote_state()
+
   self.instance.ready_count = self.instance.ready_count + 1
 
   if self.instance.ready_count < #self.instance.players then
@@ -168,6 +189,7 @@ end
 
 function PlayerSession:give_turn()
   self.completed_turn = false
+  self.invincible = false
   Net.unlock_player_input(self.player.id)
 end
 
