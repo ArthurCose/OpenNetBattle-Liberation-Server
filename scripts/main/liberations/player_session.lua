@@ -22,6 +22,7 @@ function PlayerSession:new(instance, player)
     completed_turn = false,
     selection = PlayerSelection:new(instance, player.id),
     ability = Ability.resolve_for_player(player),
+    disconnected = false,
   }
 
   setmetatable(player_session, self)
@@ -163,6 +164,10 @@ function PlayerSession:pass_turn()
 end
 
 function PlayerSession:complete_turn()
+  if self.disconnected then
+    return
+  end
+
   self.completed_turn = true
   self.selection:clear()
   Net.lock_player_input(self.player.id)
@@ -271,6 +276,8 @@ function PlayerSession:handle_disconnect()
   if self.paralyze_effect then
     self.paralyze_effect.remove()
   end
+
+  self.disconnected = true
 end
 
 -- export
