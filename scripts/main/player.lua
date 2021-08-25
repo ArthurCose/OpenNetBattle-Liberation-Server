@@ -17,6 +17,7 @@ function Player:new(player_id)
     activity = nil,
     mug = Net.get_player_mugshot(player_id),
     textbox_promise_resolvers = {},
+    resolve_battle = nil,
     avatar_details = nil,
     x = position.x,
     y = position.y,
@@ -60,10 +61,34 @@ function Player:quiz(a, b, c, texture_path, animation_path)
   return create_textbox_promise(self.textbox_promise_resolvers)
 end
 
+function Player:is_battling()
+  return self.resolve_battle ~= nil
+end
+
+-- all quizzes to this player should be made through the session while the session is alive
+function Player:initiate_encounter(asset_path)
+  if self:is_battling() then
+    error("This player is already in a battle")
+  end
+
+  Net.initiate_encounter(asset_path)
+
+  return Async.create_promise(function(resolve)
+    self.resolve_battle = resolve
+  end)
+end
+
 -- will throw if a textbox is sent to the player using Net directly
 function Player:handle_textbox_response(response)
   local resolve = table.remove(self.textbox_promise_resolvers, 1)
   resolve(response)
+end
+
+-- will throw if a battle is initiated using Net directly
+function Player:handle_battle_results(stats)
+  local resolve = self.resolve_battle
+  self.resolve_battle = nil
+  resolve(stats)
 end
 
 function Player:handle_disconnect()
@@ -71,6 +96,7 @@ function Player:handle_disconnect()
     resolve()
   end
 
+  self:handle_battle_results({ran = true})
   self.textbox_promise_resolvers = nil
 
   if self.activity then

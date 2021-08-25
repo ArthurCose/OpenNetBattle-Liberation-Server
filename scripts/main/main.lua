@@ -195,6 +195,12 @@ function handle_textbox_response(player_id, response)
   player:handle_textbox_response(response)
 end
 
+function handle_battle_results(player_id, stats) -- stats = { health: number, score: number, time: number, ran: bool, emotion: number }
+  local player = players[player_id]
+
+  player:handle_battle_results(stats)
+end
+
 function handle_player_avatar_change(player_id, details)
   local player = players[player_id]
 
