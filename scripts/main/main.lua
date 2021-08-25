@@ -38,10 +38,7 @@ local function start_game_for_player(map, player_id)
   if party == nil then
     transfer_players_to_new_instance(map, { player_id })
   else
-    if party.playing == false then
-      party.playing = true
-      transfer_players_to_new_instance(map, party.members)
-    end
+    transfer_players_to_new_instance(map, party.members)
   end
 end
 
@@ -86,14 +83,6 @@ local function remove_instance(area_id)
 
   for _, player in ipairs(instance:get_players()) do
     Net.transfer_player(player.id, waiting_area, true)
-
-    -- could possibly do this once
-    -- but race conditions (player left party/joined diff party but was still sent with group) may be possible lol
-    local party = Parties.find(player.id)
-
-    if party ~= nil then
-      party.playing = false
-    end
 
     player.activity = nil
   end

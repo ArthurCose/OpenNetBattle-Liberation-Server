@@ -2,7 +2,7 @@ local Emotes = require("scripts/libs/emotes")
 
 local Parties = {}
 
-local parties = {} -- { members, playing }[]
+local parties = {} -- { members }[]
 local pending_requests = {} -- { requester, recruit, elapsed }[]
 local tick_timer = 0
 local REQUEST_EMOTE = Emotes.QUESTION
@@ -115,8 +115,7 @@ function Parties.accept(request_index)
       members = {
         request.requester,
         request.recruit
-      },
-      playing = false
+      }
     }
   else
     local party = parties[party_info.party_index]
