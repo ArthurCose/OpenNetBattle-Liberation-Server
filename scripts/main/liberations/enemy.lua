@@ -1,6 +1,6 @@
 -- enemy implementations are in the enemies folder
 -- enemy shape:
--- { id, is_boss?, health, x, y, z, mug? } -- x, y, z should be floored, but spawned bots should be placed centered on tiles
+-- { id, name?, is_boss?, health, max_health, x, y, z, mug? } -- x, y, z should be floored, but spawned bots should be placed centered on tiles
 --   :new(instance, position, direction)
 --   :take_turn() -- promise
 --   :get_death_message() -- string
@@ -18,7 +18,9 @@ local name_to_enemy = {
 
 function Enemy.from(instance, position, direction, name)
   local enemy = name_to_enemy[name]:new(instance, position, direction)
-  Net.set_bot_name(enemy.id, name .. ": " .. enemy.health)
+  enemy.name = enemy.name or name
+
+  Net.set_bot_name(enemy.id, enemy.name .. ": " .. enemy.health)
 
   return enemy
 end

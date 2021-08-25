@@ -12,6 +12,7 @@ function BlizzardMan:new(instance, position, direction)
     instance = instance,
     id = nil,
     health = 400,
+    max_health = 400,
     x = math.floor(position.x),
     y = math.floor(position.y),
     z = math.floor(position.z),

@@ -13,6 +13,7 @@ function BigBrute:new(instance, position, direction)
     instance = instance,
     id = nil,
     health = 120,
+    max_health = 120,
     x = math.floor(position.x),
     y = math.floor(position.y),
     z = math.floor(position.z),

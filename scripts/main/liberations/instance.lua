@@ -141,6 +141,11 @@ local function take_enemy_turn(self)
       -- wait until the camera is done moving
       Async.await(Async.sleep(slide_time))
 
+      if enemy.is_boss then
+        -- darkloids heal up to 50% of health during their turn
+        Async.await(EnemyHelpers.heal(enemy, enemy.max_health / 2))
+      end
+
       Async.await(enemy:take_turn())
 
       -- wait a short amount of time to look nicer if there was no action taken

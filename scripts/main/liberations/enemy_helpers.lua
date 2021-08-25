@@ -1,3 +1,4 @@
+local RecoverEffect = require("scripts/util/recover_effect")
 local Direction = require("scripts/libs/direction")
 
 local EnemyHelpers = {}
@@ -16,6 +17,22 @@ function EnemyHelpers.play_attack_animation(enemy)
   local animation = "ATTACK_" .. suffix
 
   Net.animate_bot(enemy.id, animation)
+end
+
+function EnemyHelpers.heal(enemy, amount)
+  local previous_health = enemy.health
+
+  enemy.health = math.min(math.ceil(enemy.health + amount), enemy.max_health)
+
+  Net.set_bot_name(enemy.id, enemy.name .. ": " .. enemy.health)
+
+  if previous_health < enemy.health then
+    return RecoverEffect:new(enemy.id):remove()
+  else
+    return Async.create_promise(function(resolve)
+      resolve()
+    end)
+  end
 end
 
 function EnemyHelpers.face_position(enemy, x, y)
