@@ -220,9 +220,7 @@ end
 function handle_player_disconnect(player_id)
   local player = players[player_id]
 
-  if player.activity then
-    player.activity:handle_player_disconnect(player_id)
-  end
+  player:handle_disconnect(player_id)
 
   leave_party(player)
   players[player_id] = nil

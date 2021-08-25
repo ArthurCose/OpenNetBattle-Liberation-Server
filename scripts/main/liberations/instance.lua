@@ -512,7 +512,7 @@ function Mission:handle_tile_interaction(player_id, x, y, z, button)
     if response == 0 then
       -- Pass
       player_session:get_pass_turn_permission()
-    else
+    elseif response == 1 then
       -- Cancel
       Net.unlock_player_input(player_id)
     end
@@ -579,7 +579,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
       if response == 0 then
         -- Pass
         player_session:get_pass_turn_permission()
-      else
+      elseif response == 1 then
         -- Cancel
         Net.unlock_player_input(player_id)
       end
@@ -630,7 +630,7 @@ function Mission:handle_object_interaction(player_id, object_id, button)
         -- Pass
         player_session.selection:clear()
         player_session:get_pass_turn_permission()
-      else
+      elseif response == 2 then
         -- Cancel
         player_session.selection:clear()
         Net.unlock_player_input(player_id)

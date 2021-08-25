@@ -66,6 +66,18 @@ function Player:handle_textbox_response(response)
   resolve(response)
 end
 
+function Player:handle_disconnect()
+  for _, resolve in ipairs(self.textbox_promise_resolvers) do
+    resolve()
+  end
+
+  self.textbox_promise_resolvers = nil
+
+  if self.activity then
+    self.activity:handle_player_disconnect(self.id)
+  end
+end
+
 function Player:boot_to_lobby()
   self.activity:handle_player_disconnect(self.id)
   self.activity = nil

@@ -110,11 +110,10 @@ function PlayerSession:get_pass_turn_permission()
     if response == 0 then
       -- No
       Net.unlock_player_input(self.player.id)
-      return
+    elseif response == 1 then
+      -- Yes
+      self:pass_turn()
     end
-
-    -- Yes
-    self:pass_turn()
   end)
 end
 
