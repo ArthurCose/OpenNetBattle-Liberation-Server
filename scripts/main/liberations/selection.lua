@@ -78,8 +78,8 @@ function Selection:is_within(x, y, z)
     return false
   end
 
-  local offset_x = x - self.position.x
-  local offset_y = y - self.position.y
+  local offset_x = self.position.x - x
+  local offset_y = self.position.y - y
 
   -- transform the player position to fit into the shape
   -- default direction is UP RIGHT
