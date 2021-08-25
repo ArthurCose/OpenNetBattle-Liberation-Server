@@ -7,7 +7,7 @@
 
 local BlizzardMan = require("scripts/main/liberations/enemies/blizzardman")
 local BigBrute = require("scripts/main/liberations/enemies/bigbrute")
-local ExplodingEffect = require("scripts/util/exploding_effect")
+local ExplodingEffect = require("scripts/utils/exploding_effect")
 
 local Enemy = {}
 

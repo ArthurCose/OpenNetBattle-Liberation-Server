@@ -1,4 +1,4 @@
-local RecoverEffect = require("scripts/util/recover_effect")
+local RecoverEffect = require("scripts/utils/recover_effect")
 local Direction = require("scripts/libs/direction")
 
 local EnemyHelpers = {}

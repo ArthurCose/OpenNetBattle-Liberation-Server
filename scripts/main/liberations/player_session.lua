@@ -2,8 +2,8 @@ local Ability = require("scripts/main/liberations/ability")
 local PlayerSelection = require("scripts/main/liberations/player_selection")
 local Loot = require("scripts/main/liberations/loot")
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
-local RecoverEffect = require("scripts/util/recover_effect")
-local CustomEmotes = require("scripts/util/custom_emotes")
+local RecoverEffect = require("scripts/utils/recover_effect")
+local CustomEmotes = require("scripts/utils/custom_emotes")
 local Emotes = require("scripts/libs/emotes")
 
 local PlayerSession = {}
