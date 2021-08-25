@@ -1,6 +1,25 @@
 -- enemy implementations are in the enemies folder
 -- enemy shape:
--- { id, name?, is_boss?, health, max_health, x, y, z, mug? } -- x, y, z should be floored, but spawned bots should be placed centered on tiles
+-- {
+--   id, -- id of the spawned bot
+--   name?, -- reserved, will automatically be set on creation
+--   is_boss?, -- reserved, will automatically be set on creation
+--   health,
+--   max_health,
+--   x, -- should be floored, but spawned bots should be centered on tiles (x + .5)
+--   y, -- should be floored, but spawned bots should be centered on tiles (y + .5)
+--   z, -- should be floored
+--   mug? = {
+--     texture_path
+--     animation_path
+--   }
+--   encounters = {
+--     even,
+--     advantage,
+--     disadvantage,
+--     surrounded
+--   }
+-- }
 --   :new(instance, position, direction)
 --   :take_turn() -- promise
 --   :get_death_message() -- string

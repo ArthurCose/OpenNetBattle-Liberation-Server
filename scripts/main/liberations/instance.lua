@@ -1,6 +1,7 @@
 local PlayerSession = require("scripts/main/liberations/player_session")
 local Enemy = require("scripts/main/liberations/enemy")
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
+local PanelEncounters = require("scripts/main/liberations/panel_encounters")
 local Loot = require("scripts/main/liberations/loot")
 local Preloader = require("scripts/main/liberations/preloader")
 local CustomEmotes = require("scripts/utils/custom_emotes")
@@ -158,7 +159,7 @@ local function liberate_panel(self, player_session)
       Async.await(player_session.player:message_with_mug("Let's do it! Liberate panels!"))
 
       -- todo: battle
-
+      print(PanelEncounters.resolve_terrain(self, player_session.player))
       -- destroy enemy
       local enemy = self:get_enemy_at(panel.x, panel.y, panel.z)
       if enemy then
