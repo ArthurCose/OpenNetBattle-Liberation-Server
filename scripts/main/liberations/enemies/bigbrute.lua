@@ -52,7 +52,6 @@ function BigBrute:get_death_message()
   return "Gyaaaaahh!!"
 end
 
-
 local function sign(a)
   if a < 0 then
     return -1
@@ -123,7 +122,7 @@ local function attempt_move(self)
     local xdiff = math.floor(player.x) - self.x
     local ydiff = math.floor(player.y) - self.y
 
-    if math.abs(xdiff) < math.abs(ydiff) and xdiff ~= 0 then
+    if (ydiff == 0 or math.abs(xdiff) < math.abs(ydiff)) and xdiff ~= 0 then
       -- travel along the x axis
       if not Async.await(attempt_axis_move(self, player, xdiff, 1, 0)) then
         -- failed, try the other axis
