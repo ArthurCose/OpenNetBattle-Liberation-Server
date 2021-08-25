@@ -174,14 +174,16 @@ local function attempt_attack(self)
         y = player.y + 1 / 32,
         z = player.z
       })
-
-      player_session:hurt(20)
     end
 
     Async.await(Async.sleep(.5))
 
     for _, player in ipairs(self.instance.players) do
       Net.shake_player_camera(player.id, 2, .5)
+    end
+
+    for _, player_session in ipairs(caught_sessions) do
+      player_session:hurt(20)
     end
 
     Async.await(Async.sleep(.5))
