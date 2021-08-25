@@ -96,7 +96,10 @@ function Player:handle_disconnect()
     resolve()
   end
 
-  self:handle_battle_results({ran = true})
+  if self.resolve_battle then
+    self:handle_battle_results({ran = true})
+  end
+
   self.textbox_promise_resolvers = nil
 
   if self.activity then
