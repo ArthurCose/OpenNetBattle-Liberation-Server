@@ -83,7 +83,7 @@ function EnemyHelpers.move(instance, enemy, x, y, z, direction)
     })
 
     -- animate blur
-    Net.animate_bot(blur_bot_id, "DISAPPEAR", false)
+    Net.animate_bot(blur_bot_id, "DISAPPEAR")
 
     Async.await(Async.sleep(animation_time))
 
@@ -102,7 +102,7 @@ function EnemyHelpers.move(instance, enemy, x, y, z, direction)
       y + .5 + (1 / 32),
       z + 1
     )
-    Net.animate_bot(blur_bot_id, "APPEAR", false)
+    Net.animate_bot(blur_bot_id, "APPEAR")
 
     Async.await(Async.sleep(animation_time))
 
