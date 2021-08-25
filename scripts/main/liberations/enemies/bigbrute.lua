@@ -62,13 +62,13 @@ end
 
 local function find_offset(self, xstep, ystep, limit)
   local offset = 0
+  local step = xstep + ystep
 
-  for i = 1, limit, 1 do
-    if not EnemyHelpers.can_move_to(self.instance, self.x + xstep * i, self.y + ystep * i, self.z) then
+  for i = limit, 1, -step do
+    if EnemyHelpers.can_move_to(self.instance, self.x + xstep * i, self.y + ystep * i, self.z) then
+      offset = step * i
       break
     end
-
-    offset = (xstep + ystep) * i
   end
 
   return offset
