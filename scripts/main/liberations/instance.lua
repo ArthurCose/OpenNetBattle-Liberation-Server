@@ -23,6 +23,46 @@ local function is_adjacent(position_a, position_b)
   return x_diff + y_diff == 1
 end
 
+
+local function liberate(self)
+  for _, row in pairs(self.panels) do
+    for _, panel in pairs(row) do
+      if panel then
+        Net.remove_object(self.area_id, panel.id)
+      end
+    end
+  end
+
+  self.panels = {}
+
+  for _, enemy in ipairs(self.enemies) do
+    Net.remove_bot(enemy.id, false)
+  end
+
+  self.enemies = {}
+
+  Net.set_background(
+    self.area_id,
+    "/server/assets/backgrounds/ACDC.png",
+    "/server/assets/backgrounds/ACDC.animation",
+    0.4,
+    0.125
+  )
+
+  Net.set_song(self.area_id, "/server/assets/songs/04 Internet.ogg")
+
+  local victory_message =
+    Net.get_area_name(self.area_id) .." Liberated\n" ..
+    "Target: " .. self.target_phase .. "\n" ..
+    "Actual: " .. self.phase
+
+  for _, player in ipairs(self.players) do
+    player:message(victory_message).and_then(function()
+      player:boot_to_lobby()
+    end)
+  end
+end
+
 local DARK_HOLE_SHAPE = {
   {1, 1, 1},
   {1, 1, 1},
@@ -121,7 +161,12 @@ local function liberate_panel(self, player_session)
 
       local panels = player_session.selection:get_panels()
       Async.await(player_session:liberate_and_loot_panels(panels))
-      player_session:complete_turn()
+
+      if enemy.is_boss then
+        liberate(self)
+      else
+        player_session:complete_turn()
+      end
     end
   end)
 
@@ -256,6 +301,7 @@ function Mission:new(base_area_id, new_area_id, players)
   local mission = {
     area_id = new_area_id,
     emote_timer = 0,
+    target_phase = tonumber(Net.get_area_custom_property(base_area_id, "Target")),
     phase = 1,
     ready_count = 0,
     order_points = 3,
