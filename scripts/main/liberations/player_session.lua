@@ -2,6 +2,7 @@ local Ability = require("scripts/main/liberations/ability")
 local PlayerSelection = require("scripts/main/liberations/player_selection")
 local Loot = require("scripts/main/liberations/loot")
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
+local ParalyzeEffect = require("scripts/utils/paralyze_effect")
 local RecoverEffect = require("scripts/utils/recover_effect")
 local CustomEmotes = require("scripts/utils/custom_emotes")
 local Emotes = require("scripts/libs/emotes")
@@ -14,6 +15,8 @@ function PlayerSession:new(instance, player)
     player = player,
     health = 100,
     max_health = 100,
+    paralyze_effect = nil,
+    paralyze_counter = 0,
     battling = false,
     invincible = false,
     completed_turn = false,
@@ -132,7 +135,7 @@ function PlayerSession:heal(amount)
 end
 
 function PlayerSession:hurt(amount)
-  if self.invincible then
+  if self.invincible or self.health == 0 then
     return
   end
 
@@ -140,6 +143,17 @@ function PlayerSession:hurt(amount)
 
   self.health = math.max(math.ceil(self.health - amount), 0)
   Net.set_player_health(self.player.id, self.health)
+
+  if self.health == 0 then
+    Async.sleep(1).and_then(function()
+      self:paralyze()
+    end)
+  end
+end
+
+function PlayerSession:paralyze()
+  self.paralyze_counter = 2
+  self.paralyze_effect = ParalyzeEffect:new(self.player.id)
 end
 
 function PlayerSession:pass_turn()
@@ -164,8 +178,26 @@ function PlayerSession:complete_turn()
 end
 
 function PlayerSession:give_turn()
-  self.completed_turn = false
   self.invincible = false
+
+  if self.paralyze_counter > 0 then
+    self.paralyze_counter = self.paralyze_counter - 1
+
+    if self.paralyze_counter > 0 then
+      -- still paralyzed
+      self:complete_turn()
+      return
+    end
+
+    -- release
+    self.paralyze_effect:remove()
+    self.paralyze_effect = nil
+
+    -- heal 50% so we don't just start battles with 0 lol
+    self:heal(self.max_health / 2)
+  end
+
+  self.completed_turn = false
   Net.unlock_player_input(self.player.id)
 end
 
@@ -235,6 +267,10 @@ function PlayerSession:handle_disconnect()
 
   if self.completed_turn then
     self.instance.ready_count = self.instance.ready_count - 1
+  end
+
+  if self.paralyze_effect then
+    self.paralyze_effect.remove()
   end
 end
 

@@ -3,6 +3,7 @@ local Enemy = require("scripts/main/liberations/enemy")
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
 local Loot = require("scripts/main/liberations/loot")
 local Preloader = require("scripts/main/liberations/preloader")
+local CustomEmotes = require("scripts/utils/custom_emotes")
 
 local debug = true
 
@@ -23,6 +24,11 @@ local function is_adjacent(position_a, position_b)
   return x_diff + y_diff == 1
 end
 
+local function boot_player(player)
+  Net.set_player_emote(player.id, CustomEmotes.BLANK, true)
+  Net.unlock_player_input(player.id)
+  player:boot_to_lobby()
+end
 
 local function liberate(self)
   for _, row in pairs(self.panels) do
@@ -58,7 +64,7 @@ local function liberate(self)
 
   for _, player in ipairs(self.players) do
     player:message(victory_message).and_then(function()
-      player:boot_to_lobby()
+      boot_player(player)
     end)
   end
 end
@@ -162,7 +168,7 @@ local function liberate_panel(self, player_session)
       local panels = player_session.selection:get_panels()
       Async.await(player_session:liberate_and_loot_panels(panels))
 
-      if enemy.is_boss then
+      if enemy and enemy.is_boss then
         liberate(self)
       else
         player_session:complete_turn()
@@ -178,6 +184,25 @@ local function take_enemy_turn(self)
   local slide_time = .5
 
   local co = coroutine.create(function()
+    local down_count = 0
+
+    for _, player_session in pairs(self.player_sessions) do
+      if player_session.health == 0 then
+        down_count = down_count + 1
+      end
+    end
+
+    if down_count == #self.players then
+      for _, player in ipairs(self.players) do
+        player:message_with_mug("We're all down?\nRetreat! Retreat!").and_then(function()
+          -- todo: pan to boss and display taunt text?
+          boot_player(player)
+        end)
+      end
+
+      return
+    end
+
     for _, enemy in ipairs(self.enemies) do
       for _, player in ipairs(self.players) do
         Net.slide_player_camera(player.id, enemy.x + .5, enemy.y + .5, enemy.z, slide_time)
