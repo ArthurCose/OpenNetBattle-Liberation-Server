@@ -323,10 +323,12 @@ function Mission:new(base_area_id, new_area_id, players)
   local FIRST_PANEL_GID = Net.get_tileset(base_area_id, "/server/assets/tiles/panels.tsx").first_gid
   local TOTAL_PANEL_GIDS = 7
 
+  local solo_target = tonumber(Net.get_area_custom_property(base_area_id, "Target"))
+
   local mission = {
     area_id = new_area_id,
     emote_timer = 0,
-    target_phase = tonumber(Net.get_area_custom_property(base_area_id, "Target")),
+    target_phase = math.ceil(solo_target / #players),
     phase = 1,
     ready_count = 0,
     order_points = 3,
