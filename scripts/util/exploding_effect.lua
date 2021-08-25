@@ -34,6 +34,8 @@ local function explode(self, explosion_bot_id)
     return
   end
 
+  Net.play_sound(self.area_id, "/server/assets/sound effects/explode.ogg")
+
   if math.random(2) == 1 then
     Net.animate_bot(explosion_bot_id, "EXPLODE", false)
   else
