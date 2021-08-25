@@ -7,6 +7,8 @@ local asset_paths = {
   "/server/assets/bots/explosion.animation",
   "/server/assets/bots/item.png",
   "/server/assets/bots/item.animation",
+  "/server/assets/sound effects/recover.ogg",
+  "/server/assets/sound effects/hurt.ogg",
 }
 
 function Preloader.add_asset(asset_path)

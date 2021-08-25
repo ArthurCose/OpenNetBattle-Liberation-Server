@@ -2,6 +2,7 @@ local Ability = require("scripts/main/liberations/ability")
 local PlayerSelection = require("scripts/main/liberations/player_selection")
 local Loot = require("scripts/main/liberations/loot")
 local EnemyHelpers = require("scripts/main/liberations/enemy_helpers")
+local RecoverEffect = require("scripts/util/recover_effect")
 local CustomEmotes = require("scripts/util/custom_emotes")
 local Emotes = require("scripts/libs/emotes")
 
@@ -115,8 +116,19 @@ function PlayerSession:get_pass_turn_permission()
 end
 
 function PlayerSession:heal(amount)
+  local previous_health = self.health
+
   self.health = math.min(math.ceil(self.health + amount), self.max_health)
+
   Net.set_player_health(self.player.id, self.health)
+
+  if previous_health < self.health then
+    return RecoverEffect:new(self.player.id):remove()
+  else
+    return Async.create_promise(function(resolve)
+      resolve()
+    end)
+  end
 end
 
 function PlayerSession:hurt(amount)
@@ -124,15 +136,17 @@ function PlayerSession:hurt(amount)
     return
   end
 
+  Net.play_sound_for_player(self.player.id, "/server/assets/sound effects/hurt.ogg")
+
   self.health = math.max(math.ceil(self.health - amount), 0)
   Net.set_player_health(self.player.id, self.health)
 end
 
 function PlayerSession:pass_turn()
   -- heal up to 50% of health
-  self:heal(self.max_health / 2)
-
-  self:complete_turn()
+  self:heal(self.max_health / 2).and_then(function()
+    self:complete_turn()
+  end)
 end
 
 function PlayerSession:complete_turn()
