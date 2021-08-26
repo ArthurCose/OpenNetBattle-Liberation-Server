@@ -20,6 +20,12 @@ function BlizzardMan:new(instance, position, direction)
       texture_path = "/server/assets/mugs/blizzardman.png",
       animation_path = "/server/assets/mugs/blizzardman.animation",
     },
+    encounters = {
+      even = "/server/assets/encounters/acdc3_even.zip",
+      advantage = "/server/assets/encounters/acdc3_advantage.zip",
+      disadvantage = "/server/assets/encounters/acdc3_disadvantage.zip",
+      surrounded = "/server/assets/encounters/acdc3_disadvantage.zip"
+    },
     selection = EnemySelection:new(instance)
   }
 

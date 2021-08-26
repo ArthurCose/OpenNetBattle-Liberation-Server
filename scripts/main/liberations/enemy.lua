@@ -14,10 +14,10 @@
 --     animation_path
 --   }
 --   encounters = {
---     even,
---     advantage,
---     disadvantage,
---     surrounded
+--     even, -- asset path
+--     advantage, -- asset path
+--     disadvantage, -- asset path
+--     surrounded -- asset path
 --   }
 -- }
 --   :new(instance, position, direction)

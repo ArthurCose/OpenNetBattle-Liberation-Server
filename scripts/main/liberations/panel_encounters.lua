@@ -1,9 +1,9 @@
 local PanelEncounters = {
-  ACDC = {
-    even = {},
-    advantage = {},
-    disadvantage = {},
-    surrounded = {}
+  ACDC3 = {
+    even = "/server/assets/encounters/acdc3_even.zip",
+    advantage = "/server/assets/encounters/acdc3_advantage.zip",
+    disadvantage = "/server/assets/encounters/acdc3_disadvantage.zip",
+    surrounded = "/server/assets/encounters/acdc3_disadvantage.zip"
   }
 }
 
@@ -41,6 +41,14 @@ function PanelEncounters.resolve_terrain(instance, player)
   end
 
   return "advantage"
+end
+
+function PanelEncounters.initiate_encounter(instance, player)
+  local terrain = PanelEncounters.resolve_terrain(instance, player)
+
+  local asset_path = PanelEncounters[instance.area_name][terrain]
+
+  return player:initiate_encounter(asset_path)
 end
 
 return PanelEncounters

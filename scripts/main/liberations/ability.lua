@@ -1,4 +1,4 @@
--- todo: pass terrain to activate()? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
+local PanelEncounters = require("scripts/main/liberations/panel_encounters")
 
 local function static_shape_generator(offset_x, offset_y, shape)
   return function()
@@ -7,12 +7,27 @@ local function static_shape_generator(offset_x, offset_y, shape)
 end
 
 local function liberate_and_loot(instance, player_session)
-  -- todo: start battle, needs success handler? maybe on the player_data like on_response?
-
   local panels = player_session.selection:get_panels()
 
   player_session:liberate_and_loot_panels(panels).and_then(function()
     player_session:complete_turn()
+  end)
+end
+
+local function initiate_encounter(instance, player_session)
+  local terrain = PanelEncounters.resolve_terrain(instance, player_session.player)
+  local encounter_path = PanelEncounters[instance.area_name][terrain]
+
+  return player_session:initiate_encounter(encounter_path)
+end
+
+local function battle_to_liberate_and_loot(instance, player_session)
+  initiate_encounter(instance, player_session).and_then(function(success)
+    if success then
+      liberate_and_loot(instance, player_session)
+    else
+      player_session:complete_turn()
+    end
   end)
 end
 
@@ -26,7 +41,7 @@ local Ability = {
       {1},
       {1}
     }),
-    activate = liberate_and_loot
+    activate = battle_to_liberate_and_loot
   },
   ScrenDiv = {
     name = "ScrenDiv",
@@ -35,7 +50,7 @@ local Ability = {
     generate_shape = static_shape_generator(0, 0, {
       {1, 1, 1}
     }),
-    activate = liberate_and_loot
+    activate = battle_to_liberate_and_loot
   },
   PanelSearch = {
     name = "PanelSearch",
@@ -60,7 +75,7 @@ local Ability = {
     generate_shape = static_shape_generator(0, 1, {
       {1, 1, 1}
     }),
-    activate = liberate_and_loot
+    activate = battle_to_liberate_and_loot
   },
 }
 

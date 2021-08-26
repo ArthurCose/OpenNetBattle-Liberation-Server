@@ -72,11 +72,22 @@ function Player:is_battling()
   return self.resolve_battle ~= nil
 end
 
+local function create_default_results()
+  -- { health: number, score: number, time: number, ran: bool, emotion: number }
+  return {
+    health = 1,
+    score = 0,
+    time = 0,
+    ran = true,
+    emotion = 0
+  }
+end
+
 -- all quizzes to this player should be made through the session while the session is alive
 function Player:initiate_encounter(asset_path)
   if self.disconnected then
     return Async.create_promise(function(resolve)
-      resolve({ran = true})
+      resolve(create_default_results())
     end)
   end
 
@@ -84,7 +95,7 @@ function Player:initiate_encounter(asset_path)
     error("This player is already in a battle")
   end
 
-  Net.initiate_encounter(asset_path)
+  Net.initiate_encounter(self.id, asset_path)
 
   return Async.create_promise(function(resolve)
     self.resolve_battle = resolve
@@ -112,7 +123,7 @@ function Player:handle_disconnect()
   end
 
   if self.resolve_battle then
-    self:handle_battle_results({ran = true})
+    self:handle_battle_results(create_default_results())
   end
 
   self.textbox_promise_resolvers = nil

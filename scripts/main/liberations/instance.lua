@@ -59,7 +59,7 @@ local function liberate(self)
   Net.set_song(self.area_id, "/server/assets/songs/04 Internet.ogg")
 
   local victory_message =
-    Net.get_area_name(self.area_id) .." Liberated\n" ..
+    self.area_name .. " Liberated\n" ..
     "Target: " .. self.target_phase .. "\n" ..
     "Actual: " .. self.phase
 
@@ -119,25 +119,34 @@ local function convert_indestructible_panels(self)
   end
 end
 
--- todo: pass terrain? https://megaman.fandom.com/wiki/Liberation_Mission#:~:text=corresponding%20Barrier%20Panel.-,Terrain,-Depending%20on%20the
 local function liberate_panel(self, player_session)
+  local player = player_session.player
   local selection = player_session.selection
   local panel = selection.root_panel
 
   local co = coroutine.create(function()
     if panel.data.gid == self.BONUS_PANEL_GID then
-      Async.await(player_session.player:message_with_mug("A BonusPanel!"))
+      Async.await(player:message_with_mug("A BonusPanel!"))
 
       self:remove_panel(panel)
       selection:clear()
 
       Async.await(Loot.loot_bonus_panel(self, player_session, panel))
 
-      Net.unlock_player_input(player_session.player.id)
+      Net.unlock_player_input(player.id)
     elseif panel.data.gid == self.DARK_HOLE_PANEL_GID then
-      Async.await(player_session.player:message_with_mug("Let's do it! Liberate panels!"))
+      Async.await(player:message_with_mug("Let's do it! Liberate panels!"))
 
-      -- todo: battle
+      local terrain = PanelEncounters.resolve_terrain(self, player)
+      local enemy = panel.enemy -- doesn't matter if they're dead, the encounter data is valid
+      local encounter_path = enemy.encounters[terrain]
+
+      local success = Async.await(player_session:initiate_encounter(encounter_path))
+
+      if not success then
+        player_session:complete_turn()
+        return
+      end
 
       selection:set_shape(DARK_HOLE_SHAPE, 0, -1)
       local panels = selection:get_panels()
@@ -156,12 +165,27 @@ local function liberate_panel(self, player_session)
 
       player_session:complete_turn()
     else
-      Async.await(player_session.player:message_with_mug("Let's do it! Liberate panels!"))
+      Async.await(player:message_with_mug("Let's do it! Liberate panels!"))
 
-      -- todo: battle
-      print(PanelEncounters.resolve_terrain(self, player_session.player))
-      -- destroy enemy
+      local terrain = PanelEncounters.resolve_terrain(self, player)
+      local encounter_path
+
       local enemy = self:get_enemy_at(panel.x, panel.y, panel.z)
+
+      if enemy then
+        encounter_path = enemy.encounters[terrain]
+      else
+        encounter_path = PanelEncounters[self.area_name][terrain]
+      end
+
+      local success = Async.await(player_session:initiate_encounter(encounter_path))
+
+      if not success then
+        player_session:complete_turn()
+        return
+      end
+
+      -- destroy enemy
       if enemy then
         Async.await(Enemy.destroy(self, enemy))
       end
@@ -328,6 +352,7 @@ function Mission:new(base_area_id, new_area_id, players)
 
   local mission = {
     area_id = new_area_id,
+    area_name = Net.get_area_name(base_area_id),
     emote_timer = 0,
     target_phase = math.ceil(solo_target / #players),
     phase = 1,

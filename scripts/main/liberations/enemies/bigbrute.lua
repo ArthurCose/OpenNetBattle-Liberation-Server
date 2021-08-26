@@ -17,7 +17,13 @@ function BigBrute:new(instance, position, direction)
     x = math.floor(position.x),
     y = math.floor(position.y),
     z = math.floor(position.z),
-    selection = EnemySelection:new(instance)
+    selection = EnemySelection:new(instance),
+    encounters = {
+      even = "/server/assets/encounters/acdc3_even.zip",
+      advantage = "/server/assets/encounters/acdc3_advantage.zip",
+      disadvantage = "/server/assets/encounters/acdc3_disadvantage.zip",
+      surrounded = "/server/assets/encounters/acdc3_disadvantage.zip"
+    }
   }
 
   setmetatable(bigbrute, self)

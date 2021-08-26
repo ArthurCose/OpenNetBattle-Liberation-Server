@@ -35,7 +35,9 @@ function PlayerSession:new(instance, player)
 end
 
 function PlayerSession:emote_state()
-  if self.invincible then
+  if self.player:is_battling() then
+    Net.set_player_emote(self.player.id, Emotes.PVP)
+  elseif self.invincible then
     Net.set_player_emote(self.player.id, CustomEmotes.INVINCIBILE, true)
   elseif self.completed_turn then
     Net.set_player_emote(self.player.id, Emotes.ZZZ)
@@ -118,6 +120,25 @@ function PlayerSession:get_pass_turn_permission()
   end)
 end
 
+function PlayerSession:initiate_encounter(encounter_path)
+  return Async.create_promise(function(resolve)
+    self.player:initiate_encounter(encounter_path).and_then(function(results)
+      if results.ran then
+        -- can't run from a liberation
+        results.health = 0
+      end
+
+      self:hurt(self.health - results.health)
+
+      if results.health == 0 then
+        self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(resolve)
+      else
+        resolve(true)
+      end
+    end)
+  end)
+end
+
 function PlayerSession:heal(amount)
   local previous_health = self.health
 
@@ -135,7 +156,7 @@ function PlayerSession:heal(amount)
 end
 
 function PlayerSession:hurt(amount)
-  if self.invincible or self.health == 0 then
+  if self.invincible or self.health == 0 or amount <= 0 then
     return
   end
 
