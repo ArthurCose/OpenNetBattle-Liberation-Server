@@ -6,7 +6,7 @@ local Loot = require("scripts/main/liberations/loot")
 local Preloader = require("scripts/main/liberations/preloader")
 local CustomEmotes = require("scripts/utils/custom_emotes")
 
-local debug = true
+debug = true
 
 -- private functions
 

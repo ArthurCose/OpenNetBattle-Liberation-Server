@@ -58,7 +58,7 @@ end
 
 function BlizzardMan:take_turn()
   local co = coroutine.create(function()
-    if self.instance.phase == 1 then
+    if not debug and self.instance.phase == 1 then
       for _, player in ipairs(self.instance.players) do
         player:message(
           "I'll turn this area into a Nebula ski resort! Got it?",
