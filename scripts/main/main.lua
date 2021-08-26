@@ -214,6 +214,11 @@ end
 function handle_player_transfer(player_id)
   local player = players[player_id]
 
+  local player_pos = Net.get_player_position(player_id)
+  player.x = player_pos.x
+  player.y = player_pos.y
+  player.z = player_pos.z
+
   if player.activity then
     player.activity:handle_player_transfer(player_id)
   end
