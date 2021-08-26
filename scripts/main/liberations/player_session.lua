@@ -131,7 +131,9 @@ function PlayerSession:initiate_encounter(encounter_path)
       self:hurt(self.health - results.health)
 
       if results.health == 0 then
-        self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(resolve)
+        self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(function()
+          resolve(false)
+        end)
       else
         resolve(true)
       end
