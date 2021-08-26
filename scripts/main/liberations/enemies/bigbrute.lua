@@ -68,7 +68,8 @@ end
 
 local function find_offset(self, xstep, ystep, limit)
   local offset = 0
-  local step = xstep + ystep
+  -- adding them, as only one should be set, and the other should be set to 0
+  local step = math.abs(xstep + ystep)
 
   for i = limit, 1, -step do
     if EnemyHelpers.can_move_to(self.instance, self.x + xstep * i, self.y + ystep * i, self.z) then
@@ -91,8 +92,8 @@ local function attempt_axis_move(self, player, diff, xfilter, yfilter)
       return
     end
 
-    local targetx = self.x + offset * xfilter
-    local targety = self.y + offset * yfilter
+    local targetx = self.x + step * offset * xfilter
+    local targety = self.y + step * offset * yfilter
 
     EnemyHelpers.face_position(self, targetx + .5, targety + .5)
 
