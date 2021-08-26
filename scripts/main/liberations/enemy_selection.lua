@@ -49,7 +49,7 @@ function EnemySelection:detect_player_sessions()
   for _, player_session in pairs(self.instance.player_sessions) do
     local player = player_session.player
 
-    if self.selection:is_within(player.x, player.y, player.z) then
+    if player_session.health ~= 0 and self.selection:is_within(player.x, player.y, player.z) then
       sessions[#sessions+1] = player_session
     end
   end

@@ -160,7 +160,7 @@ function EnemyHelpers.find_closest_player_session(instance, enemy)
   for _, player_session in pairs(instance.player_sessions) do
     local player = player_session.player
 
-    if player.z ~= enemy.z then
+    if player_session.health == 0 or player.z ~= enemy.z then
       goto continue
     end
 
