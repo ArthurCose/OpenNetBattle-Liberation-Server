@@ -274,7 +274,7 @@ function PlayerSession:handle_disconnect()
   end
 
   if self.paralyze_effect then
-    self.paralyze_effect.remove()
+    self.paralyze_effect:remove()
   end
 
   self.disconnected = true
