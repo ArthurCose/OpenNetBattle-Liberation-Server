@@ -19,12 +19,16 @@ function EnemyHelpers.play_attack_animation(enemy)
   Net.animate_bot(enemy.id, animation)
 end
 
+function EnemyHelpers.update_name(enemy)
+  Net.set_bot_name(enemy.id, enemy.name .. ": " .. enemy.health)
+end
+
 function EnemyHelpers.heal(enemy, amount)
   local previous_health = enemy.health
 
   enemy.health = math.min(math.ceil(enemy.health + amount), enemy.max_health)
 
-  Net.set_bot_name(enemy.id, enemy.name .. ": " .. enemy.health)
+  EnemyHelpers.update_name(enemy)
 
   if previous_health < enemy.health then
     return RecoverEffect:new(enemy.id):remove()
@@ -175,6 +179,16 @@ function EnemyHelpers.find_closest_player_session(instance, enemy)
   end
 
   return closest_session
+end
+
+function EnemyHelpers.sync_health(enemy, results)
+  for _, data in ipairs(results.npcs) do
+    if enemy.battle_name == data.id then
+      enemy.health = data.health
+      EnemyHelpers.update_name(enemy)
+      break
+    end
+  end
 end
 
 return EnemyHelpers

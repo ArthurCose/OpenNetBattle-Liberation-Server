@@ -141,9 +141,9 @@ local function liberate_panel(self, player_session)
       local enemy = panel.enemy -- doesn't matter if they're dead, the encounter data is valid
       local encounter_path = enemy.encounters[terrain]
 
-      local success = Async.await(player_session:initiate_encounter(encounter_path))
+      local results = Async.await(player_session:initiate_encounter(encounter_path))
 
-      if not success then
+      if not results.success then
         player_session:complete_turn()
         return
       end
@@ -178,9 +178,10 @@ local function liberate_panel(self, player_session)
         encounter_path = PanelEncounters[self.area_name][terrain]
       end
 
-      local success = Async.await(player_session:initiate_encounter(encounter_path))
+      local results = Async.await(player_session:initiate_encounter(encounter_path, { health = enemy.health }))
 
-      if not success then
+      if not results.success then
+        EnemyHelpers.sync_health(enemy, results)
         player_session:complete_turn()
         return
       end

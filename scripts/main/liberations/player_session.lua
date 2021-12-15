@@ -120,9 +120,9 @@ function PlayerSession:get_pass_turn_permission()
   end)
 end
 
-function PlayerSession:initiate_encounter(encounter_path)
+function PlayerSession:initiate_encounter(encounter_path, data)
   return Async.create_promise(function(resolve)
-    self.player:initiate_encounter(encounter_path).and_then(function(results)
+    self.player:initiate_encounter(encounter_path, data).and_then(function(results)
       if results.ran then
         -- can't run from a liberation
         results.health = 0
@@ -131,11 +131,13 @@ function PlayerSession:initiate_encounter(encounter_path)
       self:hurt(self.health - results.health)
 
       if results.health == 0 then
+        results.success = false
         self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(function()
-          resolve(false)
+          resolve(results)
         end)
       else
-        resolve(true)
+        results.success = true
+        resolve(results)
       end
     end)
   end)

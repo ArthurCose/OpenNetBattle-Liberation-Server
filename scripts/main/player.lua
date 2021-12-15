@@ -84,7 +84,7 @@ local function create_default_results()
 end
 
 -- all quizzes to this player should be made through the session while the session is alive
-function Player:initiate_encounter(asset_path)
+function Player:initiate_encounter(asset_path, data)
   if self.disconnected then
     return Async.create_promise(function(resolve)
       resolve(create_default_results())
@@ -95,7 +95,7 @@ function Player:initiate_encounter(asset_path)
     error("This player is already in a battle")
   end
 
-  Net.initiate_encounter(self.id, asset_path)
+  Net.initiate_encounter(self.id, asset_path, data)
 
   return Async.create_promise(function(resolve)
     self.resolve_battle = resolve

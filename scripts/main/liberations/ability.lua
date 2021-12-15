@@ -22,8 +22,8 @@ local function initiate_encounter(instance, player_session)
 end
 
 local function battle_to_liberate_and_loot(instance, player_session)
-  initiate_encounter(instance, player_session).and_then(function(success)
-    if success then
+  initiate_encounter(instance, player_session).and_then(function(results)
+    if results.success then
       liberate_and_loot(instance, player_session)
     else
       player_session:complete_turn()

@@ -12,6 +12,7 @@ function BigBrute:new(instance, position, direction)
   local bigbrute = {
     instance = instance,
     id = nil,
+    battle_name = "BigBrute",
     health = 120,
     max_health = 120,
     x = math.floor(position.x),
@@ -19,10 +20,10 @@ function BigBrute:new(instance, position, direction)
     z = math.floor(position.z),
     selection = EnemySelection:new(instance),
     encounters = {
-      even = "/server/assets/encounters/acdc3_even.zip",
-      advantage = "/server/assets/encounters/acdc3_advantage.zip",
-      disadvantage = "/server/assets/encounters/acdc3_disadvantage.zip",
-      surrounded = "/server/assets/encounters/acdc3_disadvantage.zip"
+      even = "/server/assets/encounters/big_brute_encounter.zip",
+      advantage = "/server/assets/encounters/big_brute_encounter.zip",
+      disadvantage = "/server/assets/encounters/big_brute_encounter.zip",
+      surrounded = "/server/assets/encounters/big_brute_encounter.zip"
     }
   }
 

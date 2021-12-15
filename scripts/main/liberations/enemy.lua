@@ -2,6 +2,7 @@
 -- enemy shape:
 -- {
 --   id, -- id of the spawned bot
+--   battle_name, -- name of the virus for syncing hp
 --   name?, -- reserved, will automatically be set on creation
 --   is_boss?, -- reserved, will automatically be set on creation
 --   health,
