@@ -123,14 +123,13 @@ end
 function PlayerSession:initiate_encounter(encounter_path, data)
   return Async.create_promise(function(resolve)
     self.player:initiate_encounter(encounter_path, data).and_then(function(results)
-      if results.ran then
-        -- can't run from a liberation
-        results.health = 0
+      local total_enemy_health = 0
+
+      for _, enemy in ipairs(results.enemies) do
+        total_enemy_health = total_enemy_health + enemy.health
       end
 
-      self:hurt(self.health - results.health)
-
-      if results.health == 0 then
+      if total_enemy_health > 0 then
         results.success = false
         self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(function()
           resolve(results)

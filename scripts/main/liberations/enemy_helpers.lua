@@ -182,7 +182,7 @@ function EnemyHelpers.find_closest_player_session(instance, enemy)
 end
 
 function EnemyHelpers.sync_health(enemy, results)
-  for _, data in ipairs(results.npcs) do
+  for _, data in ipairs(results.enemies) do
     if enemy.battle_name == data.id then
       enemy.health = data.health
       EnemyHelpers.update_name(enemy)

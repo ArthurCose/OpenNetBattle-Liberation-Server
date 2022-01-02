@@ -19,12 +19,7 @@ function BigBrute:new(instance, position, direction)
     y = math.floor(position.y),
     z = math.floor(position.z),
     selection = EnemySelection:new(instance),
-    encounters = {
-      even = "/server/assets/encounters/big_brute_encounter.zip",
-      advantage = "/server/assets/encounters/big_brute_encounter.zip",
-      disadvantage = "/server/assets/encounters/big_brute_encounter.zip",
-      surrounded = "/server/assets/encounters/big_brute_encounter.zip"
-    }
+    encounter = "/server/assets/encounters/big_brute_encounter.zip"
   }
 
   setmetatable(bigbrute, self)

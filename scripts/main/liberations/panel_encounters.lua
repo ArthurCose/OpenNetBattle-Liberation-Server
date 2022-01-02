@@ -1,10 +1,5 @@
 local PanelEncounters = {
-  ACDC3 = {
-    even = "/server/assets/encounters/acdc3_even.zip",
-    advantage = "/server/assets/encounters/acdc3_advantage.zip",
-    disadvantage = "/server/assets/encounters/acdc3_disadvantage.zip",
-    surrounded = "/server/assets/encounters/acdc3_disadvantage.zip"
-  }
+  ACDC3 = "/server/assets/encounters/acdc3.zip",
 }
 
 local corner_offsets = {

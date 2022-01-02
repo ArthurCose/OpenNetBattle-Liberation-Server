@@ -137,11 +137,13 @@ local function liberate_panel(self, player_session)
     elseif panel.data.gid == self.DARK_HOLE_PANEL_GID then
       Async.await(player:message_with_mug("Let's do it! Liberate panels!"))
 
-      local terrain = PanelEncounters.resolve_terrain(self, player)
       local enemy = panel.enemy -- doesn't matter if they're dead, the encounter data is valid
-      local encounter_path = enemy.encounters[terrain]
+      local data = {
+        terrain = PanelEncounters.resolve_terrain(self, player),
+        health = enemy.max_health -- spawn fully healed
+      }
 
-      local results = Async.await(player_session:initiate_encounter(encounter_path))
+      local results = Async.await(player_session:initiate_encounter(enemy.encounter, data))
 
       if not results.success then
         player_session:complete_turn()
@@ -167,21 +169,25 @@ local function liberate_panel(self, player_session)
     else
       Async.await(player:message_with_mug("Let's do it! Liberate panels!"))
 
-      local terrain = PanelEncounters.resolve_terrain(self, player)
-      local encounter_path
-
       local enemy = self:get_enemy_at(panel.x, panel.y, panel.z)
+      local data = {
+        terrain = PanelEncounters.resolve_terrain(self, player)
+      }
 
       if enemy then
-        encounter_path = enemy.encounters[terrain]
+        encounter_path = enemy.encounter
+        data.health = enemy.health
       else
-        encounter_path = PanelEncounters[self.area_name][terrain]
+        encounter_path = PanelEncounters[self.area_name]
       end
 
-      local results = Async.await(player_session:initiate_encounter(encounter_path, { health = enemy.health }))
+      local results = Async.await(player_session:initiate_encounter(encounter_path, data))
 
       if not results.success then
-        EnemyHelpers.sync_health(enemy, results)
+        if enemy then
+          EnemyHelpers.sync_health(enemy, results)
+        end
+
         player_session:complete_turn()
         return
       end

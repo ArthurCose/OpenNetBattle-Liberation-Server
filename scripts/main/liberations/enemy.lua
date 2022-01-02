@@ -14,12 +14,7 @@
 --     texture_path
 --     animation_path
 --   }
---   encounters = {
---     even, -- asset path
---     advantage, -- asset path
---     disadvantage, -- asset path
---     surrounded -- asset path
---   }
+--   encounter = asset_path
 -- }
 --   :new(instance, position, direction)
 --   :take_turn() -- promise
