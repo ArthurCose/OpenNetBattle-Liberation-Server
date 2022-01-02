@@ -1,39 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="isometric" renderorder="right-down" width="10" height="10" tilewidth="63" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="5">
+<map version="1.5" tiledversion="1.7.2" orientation="isometric" renderorder="right-down" width="23" height="26" tilewidth="64" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="18">
  <properties>
   <property name="Background" value="custom"/>
   <property name="Background Animation" value="/server/assets/backgrounds/ACDC.animation"/>
   <property name="Background Texture" value="/server/assets/backgrounds/ACDC.png"/>
   <property name="Background Vel X" type="float" value="0.4"/>
   <property name="Background Vel Y" type="float" value="0.125"/>
-  <property name="Name" value="Lobby"/>
+  <property name="Name" value="ACDC2"/>
   <property name="Song" value="/server/assets/songs/04 Internet.ogg"/>
  </properties>
- <tileset firstgid="1" source="../assets/tiles/waiting area.tsx"/>
- <tileset firstgid="2" source="../assets/tiles/walkable space.tsx"/>
- <tileset firstgid="6" source="../assets/tiles/nebula door.tsx"/>
- <layer id="1" name="Tile Layer 1" width="10" height="10">
+ <tileset firstgid="1" source="../assets/tiles/acdc2.tsx"/>
+ <tileset firstgid="2" source="../assets/tiles/nebula door.tsx"/>
+ <tileset firstgid="8" source="../assets/tiles/walkable space.tsx"/>
+ <tileset firstgid="14" source="../assets/tiles/warp.tsx"/>
+ <tileset firstgid="20" source="../assets/tiles/home warp.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="23" height="26" visible="0">
   <data encoding="csv">
-0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,2,2,2,2,2,0,
-0,0,0,0,2,2,2,2,2,0,
-0,0,0,0,2,2,2,2,2,0,
-0,0,0,0,2,2,2,2,2,0,
-0,0,0,0,2,2,2,2,2,0,
-0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0,8,0,11,0,11,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,8,10,8,10,11,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,8,8,0,11,0,11,10,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,8,8,0,0,11,0,0,11,10,0,0,0,0,0,0,0,0,
+0,0,0,0,0,11,8,0,0,0,11,0,0,0,11,10,0,8,8,8,0,0,0,
+0,0,0,0,8,11,0,0,0,0,8,0,0,0,0,11,10,8,8,8,0,0,0,
+0,0,0,0,11,0,0,0,0,8,8,8,0,0,0,0,0,8,8,8,0,0,0,
+0,0,0,0,11,0,0,0,0,8,8,8,10,10,10,10,0,0,0,0,0,0,0,
+0,0,0,0,11,0,0,0,0,8,8,8,0,0,0,0,0,0,8,8,8,1073741836,0,
+0,0,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,
+0,0,8,8,8,8,8,0,0,0,8,8,8,0,8,8,8,0,8,0,0,0,0,
+2147483660,8,8,8,8,8,8,8,8,0,8,8,8,10,8,8,8,0,8,0,0,0,0,
+0,0,8,8,8,8,8,0,8,0,8,8,8,0,8,8,8,0,8,0,0,0,0,
+0,0,8,8,8,8,8,0,8,0,0,0,0,0,0,0,0,0,8,10,10,10,10,
+0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,8,0,0,0,11,
+0,0,0,0,0,0,0,0,8,0,8,10,10,10,10,10,10,10,8,0,10,10,11,
+0,0,0,0,0,0,0,0,8,0,11,0,11,0,0,0,0,0,8,0,0,0,11,
+0,0,0,0,0,0,0,0,8,0,0,0,0,0,11,0,11,0,8,10,10,0,11,
+0,0,0,0,0,0,0,0,8,10,10,10,10,10,8,10,8,0,8,0,0,0,11,
+0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,8,0,10,10,11,
+0,0,0,0,8,8,8,0,8,0,0,0,0,0,0,0,0,0,8,0,0,0,11,
+0,0,0,0,8,8,8,10,8,8,8,8,8,8,8,8,8,8,8,10,10,10,11,
+0,0,0,0,8,8,8,0,11,0,0,0,11,0,11,0,11,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,11,0,11,0,11,0,11,0,11,0,11,0,0,0,0,
+0,0,0,0,0,0,0,0,11,0,11,0,11,0,0,0,11,0,11,0,0,0,0,
+0,0,0,0,0,0,0,0,11,10,10,10,10,10,10,10,10,10,10,0,0,0,0
 </data>
  </layer>
  <objectgroup id="2" name="Object Layer 1">
-  <object id="1" gid="1" x="105.905" y="54.0952" width="346" height="182"/>
-  <object id="2" name="Spawn" x="207.492" y="144.508">
+  <object id="1" gid="1" x="105" y="153" width="1120" height="593"/>
+  <object id="2" name="Spawn" x="137" y="369">
    <point/>
   </object>
-  <object id="3" name="Door" gid="6" x="129.5" y="113.5" width="63" height="92"/>
-  <object id="4" name="Help Spawn" x="139.27" y="105.73">
+  <object id="3" name="Door" gid="2" x="65" y="337" width="63" height="92"/>
+  <object id="4" name="Help Spawn" x="81" y="337">
    <point/>
   </object>
+  <object id="14" type="Server Warp" gid="15" x="576" y="160" width="64" height="32">
+   <properties>
+    <property name="Address" value="iceberg.konstinople.dev"/>
+    <property name="Port" type="int" value="8765"/>
+   </properties>
+  </object>
+  <object id="15" type="Home Warp" gid="20" x="161" y="673" width="46" height="29"/>
+  <object id="16" gid="15" x="480" y="352" width="64" height="32"/>
+  <object id="17" gid="15" x="352" y="352" width="64" height="32"/>
  </objectgroup>
 </map>
