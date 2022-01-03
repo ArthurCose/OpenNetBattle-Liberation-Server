@@ -15,10 +15,13 @@ local function liberate_and_loot(instance, player_session)
 end
 
 local function initiate_encounter(instance, player_session)
-  local terrain = PanelEncounters.resolve_terrain(instance, player_session.player)
-  local encounter_path = PanelEncounters[instance.area_name][terrain]
+  local data = {
+    terrain = PanelEncounters.resolve_terrain(instance, player_session.player)
+  }
 
-  return player_session:initiate_encounter(encounter_path)
+  local encounter_path = PanelEncounters[instance.area_name]
+
+  return player_session:initiate_encounter(encounter_path, data)
 end
 
 local function battle_to_liberate_and_loot(instance, player_session)

@@ -38,12 +38,4 @@ function PanelEncounters.resolve_terrain(instance, player)
   return "advantage"
 end
 
-function PanelEncounters.initiate_encounter(instance, player)
-  local terrain = PanelEncounters.resolve_terrain(instance, player)
-
-  local asset_path = PanelEncounters[instance.area_name][terrain]
-
-  return player:initiate_encounter(asset_path)
-end
-
 return PanelEncounters
