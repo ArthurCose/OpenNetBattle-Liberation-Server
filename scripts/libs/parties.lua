@@ -106,9 +106,9 @@ function Parties.accept(request_index)
   Net.exclusive_player_emote(request.requester, request.requester, ACCEPT_EMOTE)
 
   -- leave existing party to join the new one
-  local party_info = internal_find(request.requester)
-
   Parties.leave(request.recruit)
+
+  local party_info = internal_find(request.requester)
 
   if party_info == nil then
     parties[#parties + 1] = {
