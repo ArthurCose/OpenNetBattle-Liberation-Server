@@ -108,8 +108,11 @@ function Player:handle_textbox_response(response)
   resolve(response)
 end
 
--- will throw if a battle is initiated using Net directly
 function Player:handle_battle_results(stats)
+  if not self.resolve_battle then
+    return
+  end
+
   local resolve = self.resolve_battle
   self.resolve_battle = nil
   resolve(stats)
