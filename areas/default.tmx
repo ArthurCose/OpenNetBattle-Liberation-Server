@@ -60,7 +60,7 @@
    </properties>
   </object>
   <object id="15" type="Home Warp" gid="20" x="161" y="673" width="46" height="29"/>
-  <object id="16" gid="15" x="480" y="352" width="64" height="32"/>
-  <object id="17" gid="15" x="352" y="352" width="64" height="32"/>
+  <object id="16" type="Custom Warp" gid="15" x="480" y="352" width="64" height="32"/>
+  <object id="17" type="Custom Warp" gid="15" x="352" y="352" width="64" height="32"/>
  </objectgroup>
 </map>
