@@ -18,6 +18,6 @@ end
 function handle_player_request(player_id, data)
   if data == "iceberg" then
     local spawn = Net.get_object_by_name("default", "Iceberg Spawn")
-    Net.teleport_player(player_id, true, spawn.x, spawn.y, spawn.z, Direction.DOWN_RIGHT)
+    Net.transfer_player(player_id, "default", true, spawn.x, spawn.y, spawn.z, Direction.DOWN_RIGHT)
   end
 end
