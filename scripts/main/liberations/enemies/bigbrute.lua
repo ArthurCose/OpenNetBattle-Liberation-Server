@@ -48,6 +48,7 @@ function BigBrute:spawn(direction)
     y = self.y + .5,
     z = self.z
   })
+  Net.set_bot_minimap_color(self.id, EnemyHelpers.guardian_minimap_marker)
 end
 
 function BigBrute:get_death_message()

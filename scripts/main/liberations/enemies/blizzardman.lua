@@ -51,6 +51,7 @@ function BlizzardMan:spawn(direction)
     y = self.y + .5,
     z = self.z
   })
+  Net.set_bot_minimap_color(self.id, EnemyHelpers.boss_minimap_color)
 end
 
 function BlizzardMan:get_death_message()
