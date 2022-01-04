@@ -10,9 +10,20 @@ local instances = {}
 local door = Net.get_object_by_name(waiting_area, "Door")
 local players = {}
 
+local function find_available_instance_id(start_id)
+  local number = 1
+  local instance_id = start_id
+
+  while instances[instance_id] do
+    number = number + 1
+    instance_id = start_id .. number
+  end
+
+  return instance_id
+end
 
 local function transfer_players_to_new_instance(base_area, player_ids)
-  local instance_id = player_ids[1]
+  local instance_id = find_available_instance_id(player_ids[1])
   local instance_players = {}
 
   for _, player_id in ipairs(player_ids) do
@@ -87,9 +98,9 @@ local function remove_instance(area_id)
     player.activity = nil
   end
 
-  instance:clean_up()
-
-  instances[area_id] = nil
+  instance:clean_up().and_then(function()
+    instances[area_id] = nil
+  end)
 end
 
 -- handlers
@@ -101,7 +112,7 @@ function tick(elapsed)
   for area_id, instance in pairs(instances) do
     instance:tick(elapsed)
 
-    if #instance:get_players() == 0 then
+    if #instance:get_players() == 0 and not instance:cleaning_up() then
       dead_instances[#dead_instances + 1] = area_id
     end
   end
