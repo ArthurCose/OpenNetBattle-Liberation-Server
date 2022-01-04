@@ -83,7 +83,7 @@ local function create_default_results()
   }
 end
 
--- all quizzes to this player should be made through the session while the session is alive
+-- all encounters to this player should be made through the session while the session is alive
 function Player:initiate_encounter(asset_path, data)
   if self.disconnected then
     return Async.create_promise(function(resolve)

@@ -129,6 +129,14 @@ function PlayerSession:initiate_encounter(encounter_path, data)
         total_enemy_health = total_enemy_health + enemy.health
       end
 
+      self.health = results.health
+      Net.set_player_health(self.player.id, self.health)
+      Net.set_player_emotion(self.player.id, results.emotion)
+
+      if self.health == 0 then
+        self:paralyze()
+      end
+
       if total_enemy_health > 0 then
         results.success = false
         self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(function()
