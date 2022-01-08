@@ -80,7 +80,7 @@ local function leave_party(player)
 
   for _, member_id in ipairs(party.members) do
     local member = players[member_id]
-    member:message(name .. " has left your party")
+    member:message(name .. " has left your party.")
   end
 
   if #party.members == 1 then
@@ -155,21 +155,20 @@ function handle_actor_interaction(player_id, other_player_id, button)
 
   if Net.is_bot(other_player_id) then return end
 
+  local player = players[player_id]
+  local name = Net.get_player_name(other_player_id)
+
   if Parties.is_in_same_party(player_id, other_player_id) then
+    player:message_with_mug(name .. " is already in our party.")
     return
   end
 
-  local name = Net.get_player_name(other_player_id)
-  local player = players[player_id]
-
   -- checking for an invite
-  local party_request = Parties.find_request(other_player_id, player_id)
-
-  if party_request ~= nil then
+  if Parties.has_request(player_id, other_player_id) then
     -- other player has a request for us
     player:question_with_mug("Join " .. name .. "'s party?").and_then(function(response)
       if response == 1 then
-        Parties.accept(party_request)
+        Parties.accept(player_id, other_player_id)
       end
     end)
 
@@ -177,10 +176,8 @@ function handle_actor_interaction(player_id, other_player_id, button)
   end
 
   -- try making a party request
-  party_request = Parties.find_request(player_id, other_player_id)
-
-  if party_request ~= nil then
-    -- we already made a request, just ignore
+  if Parties.has_request(other_player_id, player_id) then
+    player:message_with_mug("We already asked " .. name .. " to join our party.")
     return
   end
 
@@ -242,7 +239,7 @@ end
 function handle_player_disconnect(player_id)
   local player = players[player_id]
 
-  player:handle_disconnect(player_id)
+  player:handle_disconnect()
 
   leave_party(player)
   players[player_id] = nil

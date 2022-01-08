@@ -54,6 +54,7 @@ end
 function Parties.tick(elapsed)
   tick_timer = tick_timer + elapsed
 
+  -- tick once per second
   if tick_timer < 1 then return end
 
   local dead_requests = {}
@@ -87,7 +88,7 @@ function Parties.request(requester, recruit)
   }
 end
 
-function Parties.find_request(requester, recruit)
+local function internal_find_request(requester, recruit)
   for i, request in ipairs(pending_requests) do
     if request.requester == requester and request.recruit == recruit then
       return i
@@ -96,30 +97,34 @@ function Parties.find_request(requester, recruit)
   return nil
 end
 
-function Parties.accept(request_index)
-  local request = pending_requests[request_index]
+function Parties.has_request(recruit, requester)
+  return internal_find_request(requester, recruit) ~= nil
+end
+
+function Parties.accept(recruit, requester)
+  local request_index = internal_find_request(requester, recruit)
   table.remove(pending_requests, request_index)
 
-  Net.exclusive_player_emote(request.recruit, request.requester, ACCEPT_EMOTE)
-  Net.exclusive_player_emote(request.requester, request.recruit, ACCEPT_EMOTE)
-  Net.exclusive_player_emote(request.recruit, request.recruit, ACCEPT_EMOTE)
-  Net.exclusive_player_emote(request.requester, request.requester, ACCEPT_EMOTE)
+  Net.exclusive_player_emote(recruit, requester, ACCEPT_EMOTE)
+  Net.exclusive_player_emote(requester, recruit, ACCEPT_EMOTE)
+  Net.exclusive_player_emote(recruit, recruit, ACCEPT_EMOTE)
+  Net.exclusive_player_emote(requester, requester, ACCEPT_EMOTE)
 
   -- leave existing party to join the new one
-  Parties.leave(request.recruit)
+  Parties.leave(recruit)
 
-  local party_info = internal_find(request.requester)
+  local party_info = internal_find(requester)
 
   if party_info == nil then
     parties[#parties + 1] = {
       members = {
-        request.requester,
-        request.recruit
+        requester,
+        recruit
       }
     }
   else
     local party = parties[party_info.party_index]
-    party.members[#party_info.members + 1] = request.recruit
+    party.members[#party.members + 1] = recruit
   end
 end
 
