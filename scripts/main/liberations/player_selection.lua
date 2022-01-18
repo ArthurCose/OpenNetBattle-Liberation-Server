@@ -84,6 +84,13 @@ function PlayerSelection:set_shape(shape, shape_offset_x, shape_offset_y)
   self.selection:indicate()
 end
 
+-- shape = [m][n] bool array, n being odd, just below bottom center is player position
+function PlayerSelection:merge_shape(shape, shape_offset_x, shape_offset_y)
+  self.selection:merge_shape(shape, shape_offset_x, shape_offset_y)
+  self.selection:remove_indicators()
+  self.selection:indicate()
+end
+
 function PlayerSelection:get_panels()
   local panels = {}
 

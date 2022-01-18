@@ -62,6 +62,106 @@ function Selection:set_shape(shape, shape_offset_x, shape_offset_y)
   self.shape_offset_y = shape_offset_y or 0
 end
 
+local function add_rows(shape, index, row_width, row_count)
+  for y = 1, row_count do
+    local new_row = { }
+
+    for x = 1, row_width do
+      new_row[x] = 0
+    end
+
+    table.insert(shape, index, new_row)
+  end
+end
+
+local function widen_row(row, new_width)
+  local old_width = #row
+  local difference = new_width - old_width
+
+  -- add cols
+  for _ = 1, difference do
+    row[#row+1] = 0
+  end
+
+  local left_padding = difference / 2
+
+  -- copy to the right
+  for i = old_width, 1, -1 do
+    row[i + left_padding] = row[i]
+  end
+
+  -- clear
+  for i = 1, left_padding do
+    row[i] = 0
+  end
+end
+
+function Selection:merge_shape(shape, shape_offset_x, shape_offset_y)
+  if shape_offset_x ~= 0 then
+    print("Selection:merge_shape() does not support shape_offset_x yet")
+  end
+
+  local shape_y_difference = shape_offset_y - self.shape_offset_y
+
+  -- y positions for merging the new shape
+  local start_y = shape_y_difference + 1
+  -- new width must be able to fit both shapes
+  local new_width = math.max(#shape[1], #self.shape[1])
+
+  if shape_offset_y < self.shape_offset_y then
+    -- new shape has a lower shape_offset_y, use as the new offset
+    self.shape_offset_y = shape_offset_y
+
+    -- we're placing our new shape at the bottom
+    start_y = 1
+
+    -- expand down
+    add_rows(self.shape, 1, new_width, -shape_y_difference)
+  end
+
+  -- figure out if we need to expand up
+  local new_length = start_y + #shape - 1
+  local current_length = #self.shape
+
+  if new_length > current_length then
+    -- expand up
+    local length_difference = new_length - current_length
+    add_rows(self.shape, current_length + 1, new_width, length_difference)
+  end
+
+  -- time to actually merge the shapes
+  -- x positions for merging the new shape
+  local start_x = (new_width - #shape[1]) / 2 + 1
+  local end_x = new_width - (start_x - 1)
+
+  local end_y = start_y + #shape - 1
+
+  for y, row in ipairs(self.shape) do
+    if #row < new_width then
+      widen_row(row, new_width)
+    end
+
+    if y >= start_y and y <= end_y then
+      for x = start_x, end_x do
+        row[x] = shape[y - start_y + 1][x - start_x + 1]
+      end
+    end
+  end
+end
+
+-- really just for debugging
+function Selection:to_string()
+  local output = "{\n"
+
+  for _, row in ipairs(self.shape) do
+    output = output .. "  { " .. table.concat(row, ", ") .. " }\n"
+  end
+
+  output = output .. "}"
+
+  return output
+end
+
 function Selection:move(position, direction)
   self.position.x = math.floor(position.x)
   self.position.y = math.floor(position.y)

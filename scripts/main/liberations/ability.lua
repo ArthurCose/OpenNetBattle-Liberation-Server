@@ -6,10 +6,8 @@ local function static_shape_generator(offset_x, offset_y, shape)
   end
 end
 
-local function liberate_and_loot(instance, player_session)
-  local panels = player_session.selection:get_panels()
-
-  player_session:liberate_and_loot_panels(panels).and_then(function()
+local function liberate_and_loot(instance, player_session, results)
+  player_session:liberate_and_loot_panels(results).and_then(function()
     player_session:complete_turn()
   end)
 end
@@ -27,7 +25,7 @@ end
 local function battle_to_liberate_and_loot(instance, player_session)
   initiate_encounter(instance, player_session).and_then(function(results)
     if results.success then
-      liberate_and_loot(instance, player_session)
+      liberate_and_loot(instance, player_session, results)
     else
       player_session:complete_turn()
     end

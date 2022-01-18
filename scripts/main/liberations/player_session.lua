@@ -137,7 +137,7 @@ function PlayerSession:initiate_encounter(encounter_path, data)
         self:paralyze()
       end
 
-      if total_enemy_health > 0 then
+      if total_enemy_health > 0 or results.ran then
         results.success = false
         self.player:message_with_mug("Oh, no!\nLiberation failed!").and_then(function()
           resolve(results)
@@ -259,8 +259,20 @@ function PlayerSession:find_closest_guardian()
   return closest_guardian
 end
 
-function PlayerSession:liberate_panels(panels)
+function PlayerSession:liberate_panels(results)
   local co = coroutine.create(function()
+    if results.turns == 1 then
+      local shape = {
+        { 1, 1, 1 },
+        { 1, 0, 1 },
+        { 1, 1, 1 }
+      }
+
+      self.selection:merge_shape(shape, 0, -2)
+    end
+
+    local panels = self.selection:get_panels()
+
     -- allow time for the player to see the liberation range
     Async.await(Async.sleep(1))
 
@@ -270,7 +282,13 @@ function PlayerSession:liberate_panels(panels)
 
     self.selection:clear()
 
-    Async.await(self.player:message_with_mug("Yeah!\nI liberated it!"))
+    if results.turns == 1 then
+      Async.await(self.player:message_with_mug("Yeah!\n1 turn liberation!"))
+    else
+      Async.await(self.player:message_with_mug("Yeah!\nI liberated it!"))
+    end
+
+    return panels
   end)
 
   return Async.promisify(co)
@@ -290,9 +308,9 @@ function PlayerSession:loot_panels(panels)
   return Async.promisify(co)
 end
 
-function PlayerSession:liberate_and_loot_panels(panels)
+function PlayerSession:liberate_and_loot_panels(results)
   return Async.create_promise(function(resolve)
-    self:liberate_panels(panels).and_then(function()
+    self:liberate_panels(results).and_then(function(panels)
       self:loot_panels(panels).and_then(resolve)
     end)
   end)

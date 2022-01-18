@@ -153,7 +153,7 @@ local function liberate_panel(self, player_session)
       selection:set_shape(DARK_HOLE_SHAPE, 0, -1)
       local panels = selection:get_panels()
 
-      Async.await(player_session:liberate_panels(panels))
+      Async.await(player_session:liberate_panels(panels, results))
 
       -- destroy any spawned enemies
       Async.await(Enemy.destroy(self, panel.enemy))
@@ -197,8 +197,7 @@ local function liberate_panel(self, player_session)
         Async.await(Enemy.destroy(self, enemy))
       end
 
-      local panels = player_session.selection:get_panels()
-      Async.await(player_session:liberate_and_loot_panels(panels))
+      Async.await(player_session:liberate_and_loot_panels(results))
 
       if enemy and enemy.is_boss then
         liberate(self)
