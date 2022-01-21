@@ -20,7 +20,7 @@ function BlizzardMan:new(instance, position, direction)
       texture_path = "/server/assets/mugs/blizzardman.png",
       animation_path = "/server/assets/mugs/blizzardman.animation",
     },
-    encounter = "/server/assets/encounters/big_brute_encounter.zip",
+    encounter = "/server/assets/encounters/blizzardman_encounter.zip",
     selection = EnemySelection:new(instance)
   }
 
