@@ -32,6 +32,8 @@ local function boot_player(player)
 end
 
 local function liberate(self)
+  self.liberated = true
+
   for _, row in pairs(self.panels) do
     for _, panel in pairs(row) do
       if panel then
@@ -365,6 +367,7 @@ function Mission:new(base_area_id, new_area_id, players)
     area_name = Net.get_area_name(base_area_id),
     emote_timer = 0,
     target_phase = math.ceil(solo_target / #players),
+    liberated = false,
     phase = 1,
     ready_count = 0,
     order_points = 3,
@@ -533,7 +536,7 @@ function Mission:begin()
 end
 
 function Mission:tick(elapsed)
-  if self.ready_count == #self.players then
+  if not self.liberated and self.ready_count == #self.players then
     self.ready_count = 0
     -- now we can take a turn !
     take_enemy_turn(self)
