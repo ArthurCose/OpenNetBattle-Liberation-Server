@@ -120,7 +120,14 @@ function PlayerSession:get_pass_turn_permission()
   end)
 end
 
-function PlayerSession:initiate_encounter(encounter_path, data)
+function PlayerSession:initiate_encounter(encounter_path, battle_data)
+  local data = {
+    player = {
+      invincible = self.invincible
+    },
+    battle = battle_data
+  }
+
   return Async.create_promise(function(resolve)
     self.player:initiate_encounter(encounter_path, data).and_then(function(results)
       local total_enemy_health = 0
