@@ -284,9 +284,13 @@ local function take_enemy_turn(self)
       local neighbors = {}
 
       for _, neighbor_offset in ipairs(neighbor_offsets) do
-        local panel = self:get_panel_at(dark_hole.x + neighbor_offset[1], dark_hole.y + neighbor_offset[2], dark_hole.z)
+        local x = dark_hole.x + neighbor_offset[1]
+        local y = dark_hole.y + neighbor_offset[2]
+        local z = dark_hole.z
 
-        if panel then
+        local panel = self:get_panel_at(x, y, z)
+
+        if panel and panel.data.gid == self.BASIC_PANEL_GID and not self:get_enemy_at(x, y, z) then
           neighbors[#neighbors+1] = panel
         end
       end
