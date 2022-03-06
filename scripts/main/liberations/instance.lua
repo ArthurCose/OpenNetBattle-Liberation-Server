@@ -496,46 +496,9 @@ function Mission:cleaning_up()
 end
 
 function Mission:begin()
-  local spawn = Net.get_spawn_position(self.area_id)
-  local hold_time = .7
-  local slide_time = .7
-  local total_camera_time = 0
-
   for _, player in ipairs(self.players) do
     -- create data
     self.player_sessions[player.id] = PlayerSession:new(self, player)
-
-    if not debug then
-      Net.lock_player_input(player.id)
-
-      -- reset - we want the total camera time taken by all players in parallel, not in sequence
-      total_camera_time = 0
-
-      -- control camera
-      Net.move_player_camera(player.id, spawn.x, spawn.y, spawn.z, hold_time)
-      total_camera_time = total_camera_time + hold_time
-
-      for j, point in ipairs(self.points_of_interest) do
-        Net.slide_player_camera(player.id, point.x, point.y, point.z, slide_time)
-        Net.move_player_camera(player.id, point.x, point.y, point.z, hold_time)
-
-        total_camera_time = total_camera_time + slide_time + hold_time
-      end
-
-      Net.slide_player_camera(player.id, spawn.x, spawn.y, spawn.z, slide_time)
-      Net.unlock_player_camera(player.id)
-
-      total_camera_time = total_camera_time + slide_time
-    end
-  end
-
-  if not debug then
-    -- release players after camera animation
-    Async.sleep(total_camera_time).and_then(function()
-      for _, player in ipairs(self.players) do
-        Net.unlock_player_input(player.id)
-      end
-    end)
   end
 end
 
@@ -741,7 +704,43 @@ function Mission:handle_player_avatar_change(player_id)
   player:boot_to_lobby()
 end
 
+local function play_intro_cutscene(self, player_id)
+  local spawn = Net.get_spawn_position(self.area_id)
+  local hold_time = .7
+  local slide_time = .7
+  local total_camera_time = 0
+
+  Net.lock_player_input(player_id)
+
+  -- reset - we want the total camera time taken by all players in parallel, not in sequence
+  total_camera_time = 0
+
+  -- control camera
+  Net.move_player_camera(player_id, spawn.x, spawn.y, spawn.z, hold_time)
+  total_camera_time = total_camera_time + hold_time
+
+  for _, point in ipairs(self.points_of_interest) do
+    Net.slide_player_camera(player_id, point.x, point.y, point.z, slide_time)
+    Net.move_player_camera(player_id, point.x, point.y, point.z, hold_time)
+
+    total_camera_time = total_camera_time + slide_time + hold_time
+  end
+
+  Net.slide_player_camera(player_id, spawn.x, spawn.y, spawn.z, slide_time)
+  Net.unlock_player_camera(player_id)
+
+  total_camera_time = total_camera_time + slide_time
+
+  -- release players after camera animation
+  Async.sleep(total_camera_time).and_then(function()
+    Net.unlock_player_input(player_id)
+  end)
+end
+
 function Mission:handle_player_transfer(player_id)
+  if not debug then
+    play_intro_cutscene(self, player_id)
+  end
 end
 
 function Mission:handle_player_disconnect(player_id)
