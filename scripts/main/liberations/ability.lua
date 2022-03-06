@@ -17,7 +17,7 @@ local function initiate_encounter(instance, player_session)
     terrain = PanelEncounters.resolve_terrain(instance, player_session.player)
   }
 
-  local encounter_path = PanelEncounters[instance.area_name]
+  local encounter_path = instance.default_encounter
 
   return player_session:initiate_encounter(encounter_path, data)
 end

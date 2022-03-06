@@ -180,7 +180,7 @@ local function liberate_panel(self, player_session)
         encounter_path = enemy.encounter
         data.health = enemy.health
       else
-        encounter_path = PanelEncounters[self.area_name]
+        encounter_path = self.default_encounter
       end
 
       local results = Async.await(player_session:initiate_encounter(encounter_path, data))
@@ -369,6 +369,7 @@ function Mission:new(base_area_id, new_area_id, players)
   local mission = {
     area_id = new_area_id,
     area_name = Net.get_area_name(base_area_id),
+    default_encounter = Net.get_area_custom_property(base_area_id, "Default Encounter"),
     emote_timer = 0,
     target_phase = math.ceil(solo_target / #players),
     liberated = false,

@@ -1,6 +1,4 @@
-local PanelEncounters = {
-  ACDC3 = "/server/assets/encounters/acdc3.zip",
-}
+local PanelEncounters = {}
 
 local corner_offsets = {
   { 1, -1 },
