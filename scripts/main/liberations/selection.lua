@@ -262,6 +262,7 @@ function Selection:indicate()
       local object = generate_selection_object(self)
       object.x = object.x + offset_x
       object.y = object.y + offset_y
+      object.z = z
 
       object.id = Net.create_object(self.instance.area_id, object)
       self.objects[#self.objects+1] = object
